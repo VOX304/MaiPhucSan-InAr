@@ -1,0 +1,219 @@
+{
+  "info": {
+    "name": "Assignment 2 \u2013 Task 2 (SEPP APIs)",
+    "_postman_id": "2a2-collection-sepp",
+    "description": "Read-only inspection of OrangeHRM (OAuth2 Bearer) and OpenCRX (Basic Auth).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "OrangeHRM (Bearer)",
+      "item": [
+        {
+          "name": "OAuth \u2013 Issue Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "client_id",
+                  "value": "{{orangehrm_client_id}}"
+                },
+                {
+                  "key": "client_secret",
+                  "value": "{{orangehrm_client_secret}}"
+                },
+                {
+                  "key": "grant_type",
+                  "value": "password"
+                },
+                {
+                  "key": "username",
+                  "value": "{{orangehrm_username}}"
+                },
+                {
+                  "key": "password",
+                  "value": "{{orangehrm_password}}"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{orangehrm_base}}/oauth/issueToken",
+              "host": [
+                "{{orangehrm_base}}"
+              ],
+              "path": [
+                "oauth",
+                "issueToken"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "let res = pm.response.json();",
+                  "pm.environment.set('orangehrm_access_token', res['access_token']);",
+                  "pm.environment.set('orangehrm_token_expires_in', res['expires_in']);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Employees \u2013 Search (GET)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{orangehrm_access_token}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{orangehrm_base}}/api/v1/employee/search",
+              "host": [
+                "{{orangehrm_base}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "employee",
+                "search"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Employee \u2013 by ID (GET)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{orangehrm_access_token}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{orangehrm_base}}/api/v1/employee/{{orangehrm_employee_id}}",
+              "host": [
+                "{{orangehrm_base}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "employee",
+                "{{orangehrm_employee_id}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "OpenCRX (Basic)",
+      "item": [
+        {
+          "name": "Accounts \u2013 All (GET)",
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "basic",
+              "basic": [
+                {
+                  "key": "username",
+                  "value": "{{opencrx_username}}"
+                },
+                {
+                  "key": "password",
+                  "value": "{{opencrx_password}}"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{opencrx_base}}/org.opencrx.kernel.account1/provider/CRX/segment/Standard/account",
+              "host": [
+                "{{opencrx_base}}"
+              ],
+              "path": [
+                "org.opencrx.kernel.account1",
+                "provider",
+                "CRX",
+                "segment",
+                "Standard",
+                "account"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Account \u2013 by UID (GET)",
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "basic",
+              "basic": [
+                {
+                  "key": "username",
+                  "value": "{{opencrx_username}}"
+                },
+                {
+                  "key": "password",
+                  "value": "{{opencrx_password}}"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{opencrx_base}}/org.opencrx.kernel.account1/provider/CRX/segment/Standard/account/{{opencrx_account_uid}}",
+              "host": [
+                "{{opencrx_base}}"
+              ],
+              "path": [
+                "org.opencrx.kernel.account1",
+                "provider",
+                "CRX",
+                "segment",
+                "Standard",
+                "account",
+                "{{opencrx_account_uid}}"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

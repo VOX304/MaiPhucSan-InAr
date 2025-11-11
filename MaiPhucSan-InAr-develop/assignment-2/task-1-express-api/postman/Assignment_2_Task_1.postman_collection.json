@@ -1,0 +1,377 @@
+{
+  "info": {
+    "name": "Assignment 2 \u2013 Task 1 (Local API)",
+    "_postman_id": "2a1d-collection-local-api",
+    "description": "Requests for the local Express API (hard-coded data).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Salesmen",
+      "item": [
+        {
+          "name": "List Salesmen",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/salesmen",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "salesmen"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Salesman",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"firstName\": \"Alex\", \"lastName\": \"Doe\", \"email\": \"alex.doe@example.com\"}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/salesmen",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "salesmen"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "let data = pm.response.json();",
+                  "pm.environment.set('newSalesmanId', data.data.id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Salesman by ID (from env)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/salesmen/{{newSalesmanId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "salesmen",
+                "{{newSalesmanId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Salesman (cleanup)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/salesmen/{{newSalesmanId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "salesmen",
+                "{{newSalesmanId}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Performance",
+      "item": [
+        {
+          "name": "List Performance (all)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/performance",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "performance"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Performance (Roundtrip)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"salesmanId\": \"{{newSalesmanId}}\", \"year\": 2025, \"goals\": [{\"goalId\": \"leadership\", \"description\": \"Leadership competence\", \"valueSupervisor\": 4, \"valuePeerGroup\": 4}, {\"goalId\": \"communication\", \"description\": \"Communication skills\", \"valueSupervisor\": 5, \"valuePeerGroup\": 5}], \"remarks\": \"Roundtrip test record\"}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/performance",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "performance"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "let data = pm.response.json();",
+                  "pm.environment.set('newPerformanceId', data.data.id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Performance by Salesman",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/salesmen/{{newSalesmanId}}/performance?year=2025",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "salesmen",
+                "{{newSalesmanId}}",
+                "performance"
+              ],
+              "query": [
+                {
+                  "key": "year",
+                  "value": "2025"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Performance (cleanup)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/performance/{{newPerformanceId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "performance",
+                "{{newPerformanceId}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Roundtrip (Runner)",
+      "item": [
+        {
+          "name": "List Salesmen",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/salesmen",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "salesmen"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Salesman",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"firstName\": \"Loop\", \"lastName\": \"Runner\"}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/salesmen",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "salesmen"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.environment.set('rtSalesmanId', pm.response.json().data.id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Performance",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"salesmanId\": \"{{rtSalesmanId}}\", \"year\": 2025, \"goals\": [{\"goalId\": \"communication\", \"description\": \"Communication skills\", \"valueSupervisor\": 5, \"valuePeerGroup\": 5}]}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/performance",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "performance"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.environment.set('rtPerfId', pm.response.json().data.id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Performance by Salesman",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/salesmen/{{rtSalesmanId}}/performance",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "salesmen",
+                "{{rtSalesmanId}}",
+                "performance"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Cleanup Performance",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/performance/{{rtPerfId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "performance",
+                "{{rtPerfId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Cleanup Salesman",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/salesmen/{{rtSalesmanId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "salesmen",
+                "{{rtSalesmanId}}"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "event": [],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000"
+    }
+  ]
+}
