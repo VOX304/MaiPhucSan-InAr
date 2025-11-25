@@ -1,0 +1,199 @@
+{
+  "info": {
+    "name": "Assignment 3 – Task 1 – Node.js Mongo API",
+    "_postman_id": "a1b2c3d4-e5f6-7890-ab12-cd34ef56fa78",
+    "description": "REST API collection for SmartHoover Node.js backend (Salesmen + Performance MongoDB)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Salesmen",
+      "item": [
+        {
+          "name": "GET All Salesmen",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3000/api/v1/salesmen",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["api", "v1", "salesmen"]
+            }
+          }
+        },
+        {
+          "name": "GET Salesman by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3000/api/v1/salesmen/1",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["api", "v1", "salesmen", "1"]
+            }
+          }
+        },
+        {
+          "name": "POST Create Salesman",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"sid\": 1,\n    \"firstName\": \"John\",\n    \"lastName\": \"Doe\",\n    \"email\": \"john.doe@company.com\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3000/api/v1/salesmen",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["api", "v1", "salesmen"]
+            }
+          }
+        },
+        {
+          "name": "PUT Update Salesman",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"department\": \"Marketing\",\n  \"supervisor\": \"Alice Manager\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3000/api/v1/salesmen/1",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["api", "v1", "salesmen", "1"]
+            }
+          }
+        },
+        {
+          "name": "DELETE Salesman",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3000/api/v1/salesmen/1",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["api", "v1", "salesmen", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Performance",
+      "item": [
+        {
+          "name": "GET All Performance Records",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3000/api/v1/performance",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["api", "v1", "performance"]
+            }
+          }
+        },
+        {
+          "name": "GET Performance by Salesman",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3000/api/v1/performance?salesmanId=1",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["api", "v1", "performance"],
+              "query": [
+                { "key": "salesmanId", "value": "1" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST Create Performance Record",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"salesmanSid\": 1,\n  \"year\": 2024,\n  \"goals\": [\"Increase revenue\"],\n  \"remarks\": \"Good progress\",\n  \"score\": 85\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3000/api/v1/performance",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["api", "v1", "performance"]
+            }
+          }
+        },
+        {
+          "name": "PUT Update Performance Record",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"remarks\": \"Updated remark\",\n  \"score\": 95\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3000/api/v1/performance/{{recordId}}",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["api", "v1", "performance", "{{recordId}}"]
+            }
+          }
+        },
+        {
+          "name": "DELETE Performance Record",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3000/api/v1/performance/{{recordId}}",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["api", "v1", "performance", "{{recordId}}"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
