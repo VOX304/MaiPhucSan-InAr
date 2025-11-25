@@ -1,0 +1,33 @@
+@startuml
+left to right direction
+
+actor Salesman
+actor Supervisor
+actor "HR Manager" as HR
+actor "System Administrator" as Admin
+
+usecase "View Own Performance" as U1
+usecase "Manage Performance Records" as U2
+usecase "View Salesman List" as U3
+usecase "Create/Update/Delete Salesman" as U4
+usecase "Import HR Data (OrangeHRM)" as U5
+usecase "Import Sales KPIs (OpenCRX)" as U6
+usecase "Generate Performance Overview" as U7
+usecase "Manage Users / Roles" as U8
+
+Salesman --> U1
+Salesman --> U7
+
+Supervisor --> U2
+Supervisor --> U3
+Supervisor --> U7
+
+HR --> U5
+HR --> U7
+
+Supervisor --> U6
+
+Admin --> U3
+Admin --> U4
+Admin --> U8
+@enduml
