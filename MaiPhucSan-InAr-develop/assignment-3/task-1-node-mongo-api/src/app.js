@@ -10,6 +10,7 @@ const path = require('path');
 const YAML = require('yamljs');
 const swaggerUi = require('swagger-ui-express');
 const { connect } = require('./db/mongo');
+const externalRoutes = require('./routes/external.routes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -24,6 +25,7 @@ const salesmenRoutes = require('./routes/salesmen.routes');
 const performanceRoutes = require('./routes/performance.routes');
 app.use('/api/v1', salesmenRoutes);
 app.use('/api/v1', performanceRoutes);
+app.use('/api/v1/external', externalRoutes);
 
 // Swagger UI (OpenAPI)
 const openapiPath = path.join(__dirname, '..', 'openapi', 'openapi.yaml');
