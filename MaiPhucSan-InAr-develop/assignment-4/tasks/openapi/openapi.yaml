@@ -1,16 +1,31 @@
+# SmartHoover Bonus API
+
+# HOST: https://api.smarthoover.example.com/v1
 
 openapi: 3.0.3
 info:
-  title: Salesmen & Social Performance API (Assignment 2.1)
-  version: "1.0.0"
+  title: SmartHoover Bonus API (Assignment 3)
+  version: "2.0.0"
   description: |
-    First REST API version for administering salesmen and their **social performance** records.
-    Data is **hard-coded** (no database). This API is used in Task 1-b and tested in Task 1-c.
+    REST API for administering SmartHoover salesmen and their social performance
+    records, backed by MongoDB and integrated enterprise systems (OrangeHRM and OpenCRX).
 servers:
+  - url: https://api.smarthoover.example.com/v1
+    description: Production server (example for ApiLint / HTTPS rule)
   - url: http://localhost:3000/api/v1
+    description: Local development server
+
+tags:
+  - name: Salesmen
+    description: CRUD operations for salesmen
+  - name: Performance
+    description: Social performance records
+  - name: Integration
+    description: Read-only access to OrangeHRM and OpenCRX
 paths:
   /salesmen:
     get:
+      tags: [Salesmen]
       summary: List salesmen
       parameters:
         - in: query
@@ -30,6 +45,7 @@ paths:
                     type: array
                     items: { $ref: "#/components/schemas/Salesman" }
     post:
+      tags: [Salesmen]
       summary: Create salesman
       requestBody:
         required: true
@@ -44,6 +60,7 @@ paths:
               schema: { $ref: "#/components/schemas/EnvelopeSalesman" }
   /salesmen/{id}:
     get:
+      tags: [Salesmen]
       summary: Get salesman by id
       parameters:
         - in: path
@@ -59,6 +76,7 @@ paths:
         "404":
           description: Not found
     put:
+      tags: [Salesmen]
       summary: Update salesman
       parameters:
         - in: path
@@ -79,6 +97,7 @@ paths:
         "404":
           description: Not found
     delete:
+      tags: [Salesmen]
       summary: Delete salesman
       parameters:
         - in: path
@@ -95,6 +114,7 @@ paths:
           description: Not found
   /performance:
     get:
+      tags: [Performance]
       summary: List social performance records
       parameters:
         - in: query
@@ -116,6 +136,7 @@ paths:
                     type: array
                     items: { $ref: "#/components/schemas/PerformanceRecord" }
     post:
+      tags: [Performance]
       summary: Create performance record (one per salesman+year)
       requestBody:
         required: true
@@ -130,6 +151,7 @@ paths:
               schema: { $ref: "#/components/schemas/EnvelopePerformance" }
   /performance/{id}:
     put:
+      tags: [Performance]
       summary: Update performance record by id
       parameters:
         - in: path
@@ -148,6 +170,7 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/EnvelopePerformance" }
     delete:
+      tags: [Performance]
       summary: Delete performance record by id
       parameters:
         - in: path
@@ -162,6 +185,7 @@ paths:
               schema: { $ref: "#/components/schemas/EnvelopePerformance" }
   /salesmen/{id}/performance:
     get:
+      tags: [Performance]
       summary: List performance records for a given salesman
       parameters:
         - in: path
@@ -183,6 +207,49 @@ paths:
                   data:
                     type: array
                     items: { $ref: "#/components/schemas/PerformanceRecord" }
+    /external/orangehrm/salesmen:
+    get:
+      tags: [Integration]
+      summary: List salesmen from OrangeHRM
+      description: >
+        Returns salesmen data fetched from the OrangeHRM tenant and mapped into
+        the internal Salesman representation. Read-only.
+      responses:
+        "200":
+          description: List of mapped OrangeHRM employees
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Salesman"
+
+  /external/opencrx/accounts:
+    get:
+      tags: [Integration]
+      summary: List accounts from OpenCRX
+      description: >
+        Returns a subset of account data from the OpenCRX instance. Read-only.
+      responses:
+        "200":
+          description: List of OpenCRX accounts
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/OpenCrxAccount"
+
 components:
   schemas:
     Salesman:
@@ -252,3 +319,25 @@ components:
       type: object
       properties:
         data: { $ref: "#/components/schemas/PerformanceRecord" }
+        OpenCrxAccount:
+      type: object
+      description: Minimal projection of an OpenCRX account used by the dashboard
+      required: [id, fullName]
+      properties:
+        id:
+          type: string
+          example: "account-123"
+        fullName:
+          type: string
+          example: "Acme Corp."
+        email:
+          type: string
+          format: email
+          nullable: true
+          example: "contact@acme.com"
+        accountNo:
+          type: string
+          nullable: true
+          description: "Optional OpenCRX account number"
+          example: "ACME-001"
+
