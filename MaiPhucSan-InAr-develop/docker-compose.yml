@@ -1,0 +1,21 @@
+version: "3.9"
+
+services:
+  mongodb:
+    image: mongo:6
+    container_name: iar-mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+
+  camunda:
+    image: camunda/camunda-bpm-platform:run-latest
+    container_name: iar-camunda
+    ports:
+      - "8080:8080"
+    environment:
+      - TZ=UTC
+
+volumes:
+  mongodb_data:

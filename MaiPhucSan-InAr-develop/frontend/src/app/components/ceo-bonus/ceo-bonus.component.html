@@ -1,0 +1,120 @@
+<mat-card style="margin-bottom: 16px">
+  <h3>CEO Cockpit</h3>
+
+  <p>
+    This view supports:
+    <strong>M_FR4</strong> (CEO involved), <strong>M_FR1</strong> (compute totals),
+    <strong>M_FR2</strong> (remarks), <strong>C_FR8</strong> (qualifications),
+    and <strong>N_FR2</strong> (Camunda workflow prototype).
+  </p>
+
+  <div *ngIf="error" style="margin: 10px 0; color: #b00020">
+    {{ error }}
+  </div>
+</mat-card>
+
+<mat-card style="margin-bottom: 16px">
+  <h4>Selection</h4>
+
+  <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center">
+    <mat-form-field appearance="fill">
+      <mat-label>EmployeeId</mat-label>
+      <input matInput [(ngModel)]="employeeId" />
+    </mat-form-field>
+
+    <mat-form-field appearance="fill" style="width: 140px">
+      <mat-label>Year</mat-label>
+      <input matInput type="number" [(ngModel)]="year" />
+    </mat-form-field>
+
+    <button mat-raised-button color="primary" (click)="computeBonus()">Compute Bonus</button>
+    <button mat-stroked-button (click)="loadBonus()">Load Bonus</button>
+    <button mat-stroked-button color="primary" (click)="approveCeo()">Approve (CEO)</button>
+  </div>
+</mat-card>
+
+<mat-card style="margin-bottom: 16px">
+  <h4>Add remark (M_FR2)</h4>
+  <form [formGroup]="remarkForm" (ngSubmit)="addRemark()" style="display: flex; gap: 12px; flex-wrap: wrap">
+    <mat-form-field appearance="fill" style="min-width: 320px; flex: 1">
+      <mat-label>Remark</mat-label>
+      <input matInput formControlName="text" />
+    </mat-form-field>
+
+    <button mat-raised-button color="primary" type="submit" [disabled]="remarkForm.invalid">
+      Add remark
+    </button>
+  </form>
+</mat-card>
+
+<mat-card style="margin-bottom: 16px">
+  <h4>Create qualification (C_FR8)</h4>
+  <form [formGroup]="qualificationForm" (ngSubmit)="createQualification()" style="display: flex; gap: 12px; flex-wrap: wrap">
+    <mat-form-field appearance="fill">
+      <mat-label>Title</mat-label>
+      <input matInput formControlName="title" />
+    </mat-form-field>
+
+    <mat-form-field appearance="fill" style="min-width: 320px; flex: 1">
+      <mat-label>Description</mat-label>
+      <input matInput formControlName="description" />
+    </mat-form-field>
+
+    <mat-form-field appearance="fill" style="width: 160px">
+      <mat-label>Store in OrangeHRM</mat-label>
+      <mat-select formControlName="storeInOrangeHrm">
+        <mat-option [value]="false">No</mat-option>
+        <mat-option [value]="true">Yes</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <button mat-raised-button color="primary" type="submit" [disabled]="qualificationForm.invalid">
+      Create
+    </button>
+  </form>
+</mat-card>
+
+<mat-card style="margin-bottom: 16px">
+  <h4>Camunda workflow (N_FR2 / TR9)</h4>
+  <p>
+    Start the BPMN process (<code>bonusApproval</code>) in Camunda. You must deploy the BPMN first (see
+    <code>workflow/bonusApproval.bpmn</code>).
+  </p>
+
+  <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center">
+    <button mat-stroked-button color="primary" (click)="startWorkflow()">Start process</button>
+    <button mat-stroked-button (click)="loadWorkflowTasks()" [disabled]="!workflow?.id">
+      List tasks
+    </button>
+  </div>
+
+  <div *ngIf="workflow?.id" style="margin-top: 10px">
+    <div><strong>processInstanceId:</strong> {{ workflow.id }}</div>
+  </div>
+
+  <ul *ngIf="workflowTasks.length" style="margin-top: 10px">
+    <li *ngFor="let t of workflowTasks">
+      {{ t.name }} — id: {{ t.id }}
+      <button mat-button color="primary" (click)="completeTask(t.id)">Complete</button>
+    </li>
+  </ul>
+</mat-card>
+
+<mat-card>
+  <h4>Current bonus computation</h4>
+
+  <div *ngIf="bonus; else noBonus">
+    <p>
+      <strong>Status:</strong> {{ bonus.status }} — <strong>Total:</strong>
+      {{ bonus.totalBonusEur | number : '1.2-2' }} EUR
+      (social: {{ bonus.socialTotalEur | number : '1.2-2' }}, orders:
+      {{ bonus.ordersTotalEur | number : '1.2-2' }})
+    </p>
+
+    <pre style="white-space: pre-wrap">{{ bonus | json }}</pre>
+  </div>
+
+  <ng-template #noBonus>
+    <p>No bonus loaded yet.</p>
+  </ng-template>
+</mat-card>

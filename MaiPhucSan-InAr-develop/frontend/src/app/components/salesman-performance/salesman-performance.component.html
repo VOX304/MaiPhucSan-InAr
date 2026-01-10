@@ -1,0 +1,125 @@
+<mat-card style="margin-bottom: 16px">
+  <h3>Salesman View</h3>
+  <p>
+    This view supports:
+    <strong>C_FR6</strong> (salesman sees computation), <strong>C_FR9</strong> (sees qualifications),
+    and <strong>N_FR4</strong> (confirm bonus).
+  </p>
+
+  <div *ngIf="error" style="margin: 10px 0; color: #b00020">
+    {{ error }}
+  </div>
+</mat-card>
+
+<mat-card style="margin-bottom: 16px">
+  <h4>Selection</h4>
+  <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center">
+    <mat-form-field appearance="fill">
+      <mat-label>EmployeeId</mat-label>
+      <input matInput [(ngModel)]="employeeId" />
+    </mat-form-field>
+
+    <mat-form-field appearance="fill" style="width: 140px">
+      <mat-label>Year</mat-label>
+      <input matInput type="number" [(ngModel)]="year" />
+    </mat-form-field>
+
+    <button mat-raised-button color="primary" (click)="reloadAll()">Reload</button>
+  </div>
+</mat-card>
+
+<mat-card style="margin-bottom: 16px">
+  <h4>Bonus</h4>
+
+  <div *ngIf="bonus; else noBonus">
+    <p>
+      <strong>Status:</strong> {{ bonus.status }} — <strong>Total:</strong>
+      {{ bonus.totalBonusEur | number : '1.2-2' }} EUR
+    </p>
+
+    <button
+      mat-raised-button
+      color="primary"
+      (click)="confirmBonus()"
+      [disabled]="bonus.status !== 'RELEASED_TO_SALESMAN'"
+    >
+      Confirm bonus (N_FR4)
+    </button>
+
+    <h5 style="margin-top: 16px">Remarks</h5>
+    <ul>
+      <li *ngFor="let r of bonus.remarks || []">
+        {{ r.createdAt }} — <strong>{{ r.byUsername }}</strong> ({{ r.role }}): {{ r.text }}
+      </li>
+    </ul>
+  </div>
+
+  <ng-template #noBonus>
+    <p>No bonus released yet.</p>
+  </ng-template>
+</mat-card>
+
+<mat-card style="margin-bottom: 16px">
+  <h4>Social performance</h4>
+  <p><strong>Social total:</strong> {{ socialTotalEur | number : '1.2-2' }} EUR</p>
+
+  <table class="mat-elevation-z1" style="width: 100%; border-collapse: collapse">
+    <thead>
+      <tr>
+        <th style="text-align: left; padding: 6px">Criterion</th>
+        <th style="text-align: left; padding: 6px">Target</th>
+        <th style="text-align: left; padding: 6px">Actual</th>
+        <th style="text-align: left; padding: 6px">Weight</th>
+        <th style="text-align: left; padding: 6px">Bonus</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let r of socialRecords">
+        <td style="padding: 6px">{{ r.criterionName }}</td>
+        <td style="padding: 6px">{{ r.targetValue }}</td>
+        <td style="padding: 6px">{{ r.actualValue }}</td>
+        <td style="padding: 6px">{{ r.weight }}</td>
+        <td style="padding: 6px">{{ r.computedBonusEur | number : '1.2-2' }}</td>
+      </tr>
+    </tbody>
+  </table>
+</mat-card>
+
+<mat-card style="margin-bottom: 16px">
+  <h4>Orders evaluation</h4>
+  <p><strong>Orders total:</strong> {{ ordersTotalEur | number : '1.2-2' }} EUR</p>
+
+  <table class="mat-elevation-z1" style="width: 100%; border-collapse: collapse">
+    <thead>
+      <tr>
+        <th style="text-align: left; padding: 6px">OrderId</th>
+        <th style="text-align: left; padding: 6px">Product</th>
+        <th style="text-align: left; padding: 6px">Client</th>
+        <th style="text-align: left; padding: 6px">Bonus</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let o of orders">
+        <td style="padding: 6px">{{ o.orderId }}</td>
+        <td style="padding: 6px">{{ o.productName }}</td>
+        <td style="padding: 6px">{{ o.clientName }}</td>
+        <td style="padding: 6px">{{ o.computedBonusEur | number : '1.2-2' }}</td>
+      </tr>
+    </tbody>
+  </table>
+</mat-card>
+
+<mat-card>
+  <h4>Qualifications</h4>
+
+  <ul *ngIf="qualifications.length; else noQual">
+    <li *ngFor="let q of qualifications">
+      {{ q.year }} — <strong>{{ q.title }}</strong>: {{ q.description }}
+      <span *ngIf="q.storedInOrangeHrmAt"> (stored in OrangeHRM)</span>
+    </li>
+  </ul>
+
+  <ng-template #noQual>
+    <p>No qualifications yet.</p>
+  </ng-template>
+</mat-card>

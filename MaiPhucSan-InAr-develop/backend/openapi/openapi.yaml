@@ -1,0 +1,672 @@
+openapi: 3.0.3
+info:
+  title: HighPerformance Integration Backend API
+  version: "2.0.0"
+  description: |
+    Node.js backend for the semester project **HighPerformance**.
+
+    Key goals:
+    - TR1/TR3: Express.js REST API documented via OpenAPI + Swagger UI
+    - TR2: MongoDB persistence (via Mongoose)
+    - TR4: integration boundaries for OrangeHRM + OpenCRX
+    - TR8: integration tests can stub dependencies
+    - TR9: optional Camunda workflow endpoints
+servers:
+  - url: http://localhost:3000/api/v1
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+
+    AuthLoginRequest:
+      type: object
+      required: [username, password]
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+
+    AuthUser:
+      type: object
+      properties:
+        username:
+          type: string
+        role:
+          type: string
+          enum: [CEO, HR, SALESMAN]
+        employeeId:
+          type: string
+          nullable: true
+
+    AuthLoginResponse:
+      type: object
+      properties:
+        token:
+          type: string
+        user:
+          $ref: "#/components/schemas/AuthUser"
+
+    EnvelopeAuthLogin:
+      type: object
+      properties:
+        data:
+          $ref: "#/components/schemas/AuthLoginResponse"
+
+    EnvelopeAuthUser:
+      type: object
+      properties:
+        data:
+          $ref: "#/components/schemas/AuthUser"
+
+    Salesman:
+      type: object
+      properties:
+        _id: { type: string }
+        employeeId: { type: string }
+        name: { type: string }
+        department: { type: string }
+        performanceYear: { type: integer }
+        orangeHrmId:
+          type: string
+          nullable: true
+
+    EnvelopeSalesman:
+      type: object
+      properties:
+        data:
+          $ref: "#/components/schemas/Salesman"
+
+    EnvelopeSalesmen:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Salesman"
+
+    SocialPerformanceRecord:
+      type: object
+      properties:
+        _id: { type: string }
+        salesmanEmployeeId: { type: string }
+        year: { type: integer }
+        criterionKey: { type: string }
+        criterionName: { type: string }
+        targetValue: { type: number }
+        actualValue: { type: number }
+        weight: { type: number }
+        supervisorRating: { type: number }
+        peerRating: { type: number }
+        computedBonusEur: { type: number }
+        remark: { type: string }
+
+    EnvelopeSocialRecords:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            records:
+              type: array
+              items:
+                $ref: "#/components/schemas/SocialPerformanceRecord"
+            socialTotalEur:
+              type: number
+
+    OrderEvaluationRecord:
+      type: object
+      properties:
+        _id: { type: string }
+        salesmanEmployeeId: { type: string }
+        year: { type: integer }
+        orderId: { type: string }
+        productName: { type: string }
+        clientName: { type: string }
+        clientRanking: { type: number }
+        closingProbability: { type: number }
+        itemsCount: { type: number }
+        revenueEur: { type: number }
+        computedBonusEur: { type: number }
+        remark: { type: string }
+
+    EnvelopeOrders:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            records:
+              type: array
+              items:
+                $ref: "#/components/schemas/OrderEvaluationRecord"
+            ordersTotalEur:
+              type: number
+
+    BonusComputation:
+      type: object
+      properties:
+        _id: { type: string }
+        salesmanEmployeeId: { type: string }
+        year: { type: integer }
+        socialTotalEur: { type: number }
+        ordersTotalEur: { type: number }
+        totalBonusEur: { type: number }
+        status: { type: string }
+        remarks:
+          type: array
+          items:
+            type: object
+            properties:
+              byUsername: { type: string }
+              role: { type: string }
+              text: { type: string }
+              createdAt: { type: string }
+        details:
+          type: object
+          nullable: true
+
+    EnvelopeBonus:
+      type: object
+      properties:
+        data:
+          $ref: "#/components/schemas/BonusComputation"
+
+    EnvelopeBonusList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/BonusComputation"
+
+    Qualification:
+      type: object
+      properties:
+        _id: { type: string }
+        salesmanEmployeeId: { type: string }
+        year: { type: integer }
+        title: { type: string }
+        description: { type: string }
+        createdBy: { type: string }
+        storedInOrangeHrmAt:
+          type: string
+          nullable: true
+
+    EnvelopeQualifications:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Qualification"
+
+    BonusStatistics:
+      type: object
+      properties:
+        year: { type: integer }
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              employeeId: { type: string }
+              totalBonusEur: { type: number }
+              socialTotalEur: { type: number }
+              ordersTotalEur: { type: number }
+
+    EnvelopeStatistics:
+      type: object
+      properties:
+        data:
+          $ref: "#/components/schemas/BonusStatistics"
+
+    DependenciesHealth:
+      type: object
+      properties:
+        orangehrm:
+          type: object
+          properties: { reachable: { type: boolean } }
+        opencrx:
+          type: object
+          properties: { reachable: { type: boolean } }
+        mongodb:
+          type: object
+          properties: { reachable: { type: boolean } }
+        camunda:
+          type: object
+          properties: { reachable: { type: boolean } }
+
+    EnvelopeDependenciesHealth:
+      type: object
+      properties:
+        data:
+          $ref: "#/components/schemas/DependenciesHealth"
+
+paths:
+  /auth/login:
+    post:
+      summary: Login and receive JWT
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthLoginRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvelopeAuthLogin"
+        "401":
+          description: Unauthorized
+
+  /auth/me:
+    get:
+      summary: Get current user
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvelopeAuthUser"
+
+  /salesmen:
+    get:
+      summary: List salesmen
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvelopeSalesmen"
+    post:
+      summary: Create salesman (HR)
+      security:
+        - bearerAuth: []
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvelopeSalesman"
+
+  /salesmen/consolidated:
+    get:
+      summary: Consolidated view for all salesmen
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OK
+
+  /salesmen/{employeeId}:
+    get:
+      summary: Get salesman by employeeId
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: employeeId
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvelopeSalesman"
+        "404":
+          description: Not found
+    patch:
+      summary: Update salesman (HR)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: employeeId
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+
+  /salesmen/{employeeId}/sync:
+    post:
+      summary: Sync salesman master data from OrangeHRM
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: employeeId
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+
+  /salesmen/{employeeId}/consolidated:
+    get:
+      summary: Consolidated view for one salesman
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: employeeId
+          required: true
+          schema: { type: string }
+        - in: query
+          name: year
+          schema: { type: integer }
+      responses:
+        "200":
+          description: OK
+
+  /performance/social/{employeeId}:
+    get:
+      summary: List social performance records for a salesman
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: employeeId
+          required: true
+          schema: { type: string }
+        - in: query
+          name: year
+          schema: { type: integer }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvelopeSocialRecords"
+
+  /performance/social:
+    post:
+      summary: Create a social performance record (HR)
+      security:
+        - bearerAuth: []
+      responses:
+        "201":
+          description: Created
+
+  /performance/social/records/{recordId}:
+    patch:
+      summary: Update target/actual/ratings of a social performance record (HR)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: recordId
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+
+  /orders/{employeeId}:
+    get:
+      summary: List order evaluation records for a salesman (optional refresh from OpenCRX)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: employeeId
+          required: true
+          schema: { type: string }
+        - in: query
+          name: year
+          schema: { type: integer }
+        - in: query
+          name: refresh
+          schema: { type: boolean }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvelopeOrders"
+
+  /orders:
+    post:
+      summary: Create an order evaluation record (HR)
+      security:
+        - bearerAuth: []
+      responses:
+        "201":
+          description: Created
+
+  /bonus/{employeeId}:
+    get:
+      summary: Get bonus computation for a salesman
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: employeeId
+          required: true
+          schema: { type: string }
+        - in: query
+          name: year
+          schema: { type: integer }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvelopeBonus"
+        "404":
+          description: Not found
+
+  /bonus/{employeeId}/compute:
+    post:
+      summary: Compute bonus for a salesman (CEO)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: employeeId
+          required: true
+          schema: { type: string }
+        - in: query
+          name: year
+          schema: { type: integer }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvelopeBonus"
+
+  /bonus/{employeeId}/history:
+    get:
+      summary: List bonus computations of a salesman
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: employeeId
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvelopeBonusList"
+
+  /bonus/{employeeId}/remarks:
+    post:
+      summary: Add a remark to a bonus computation
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: employeeId
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+
+  /bonus/{employeeId}/approve/ceo:
+    post:
+      summary: CEO approves a computed bonus
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OK
+
+  /bonus/{employeeId}/approve/hr:
+    post:
+      summary: HR approves and stores total bonus in OrangeHRM
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OK
+
+  /bonus/{employeeId}/release:
+    post:
+      summary: Release final bonus to salesman
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OK
+
+  /bonus/{employeeId}/confirm:
+    post:
+      summary: Salesman confirms final bonus computation
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OK
+
+  /qualifications/{employeeId}:
+    get:
+      summary: List qualifications of a salesman
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: employeeId
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvelopeQualifications"
+    post:
+      summary: Create a qualification (CEO)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: employeeId
+          required: true
+          schema: { type: string }
+      responses:
+        "201":
+          description: Created
+
+  /statistics/bonus:
+    get:
+      summary: Bonus totals for charts
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvelopeStatistics"
+
+  /workflow/bonus/{employeeId}/start:
+    post:
+      summary: Start Camunda bonus approval process
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OK
+
+  /workflow/process/{processInstanceId}/tasks:
+    get:
+      summary: List Camunda tasks for a process instance
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: processInstanceId
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+
+  /workflow/tasks/{taskId}/complete:
+    post:
+      summary: Complete a Camunda task
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: taskId
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+
+  /odoo/employees:
+    get:
+      summary: Fetch employees from Odoo (if configured)
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OK
+
+  /integration/health:
+    get:
+      summary: Dependency reachability overview (OrangeHRM/OpenCRX/MongoDB/Camunda)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvelopeDependenciesHealth"

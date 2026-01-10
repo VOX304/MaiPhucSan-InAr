@@ -1,0 +1,32 @@
+<mat-card style="margin-bottom: 16px">
+  <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px">
+    <div>
+      <h2 style="margin: 0">Performance Cockpit</h2>
+      <div *ngIf="user">
+        Logged in as <strong>{{ user.username }}</strong> (role: <strong>{{ user.role }}</strong
+        >)
+        <span *ngIf="user.employeeId"> — employeeId: <strong>{{ user.employeeId }}</strong></span>
+      </div>
+    </div>
+
+    <button mat-stroked-button color="primary" (click)="logout()">Logout</button>
+  </div>
+</mat-card>
+
+<mat-tab-group>
+  <mat-tab label="Welcome">
+    <app-welcome></app-welcome>
+  </mat-tab>
+
+  <mat-tab label="HR" *ngIf="user?.role === 'HR' || user?.role === 'CEO'">
+    <app-hr-employees></app-hr-employees>
+  </mat-tab>
+
+  <mat-tab label="CEO" *ngIf="user?.role === 'CEO'">
+    <app-ceo-bonus></app-ceo-bonus>
+  </mat-tab>
+
+  <mat-tab label="Salesman" *ngIf="user?.role === 'SALESMAN'">
+    <app-salesman-performance></app-salesman-performance>
+  </mat-tab>
+</mat-tab-group>
