@@ -1,0 +1,23 @@
+{
+  "name": "inar-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "backend:dev": "npm --workspace backend run dev",
+    "backend:start": "npm --workspace backend run start",
+    "backend:test": "npm --workspace backend run test",
+    "backend:lint": "npm --workspace backend run lint",
+    "frontend:start": "npm --workspace frontend run start",
+    "frontend:build": "npm --workspace frontend run build",
+    "frontend:lint": "npm --workspace frontend run lint",
+    "lint": "npm run backend:lint && npm run frontend:lint",
+    "test": "npm run backend:test",
+    "backend:seed": "npm --workspace backend run seed",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down"
+  }
+}

@@ -1,66 +1,22 @@
-# =========================
-# Node.js
-# =========================
+# Node
 node_modules/
-npm-debug.log
-yarn-debug.log
-yarn-error.log
-pnpm-debug.log
-package-lock.json
+
+# Angular
+/dist/
+/.angular/
 
 # Logs
-logs
-*.log
-logs/*
-debug.log
-error.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
-# Runtime data
-pids
-*.pid
-*.seed
-*.pid.lock
-
-# Coverage
-coverage/
-.nyc_output/
-
-# Environment variables
+# Environment files
 .env
-.env.local
-.env.production
-.env.development
 
-# Temporary files
-tmp/
-temp/
-*.tmp
-*.swp
-*.swo
-
-# Build output (Angular, if used)
-dist/
-build/
-.angular/
-.angular/cache/
-
-# IDE / Editor junk
-.vscode/
-.idea/
-*.iml
-
-# MacOS / Windows crap
+# OS
 .DS_Store
 Thumbs.db
 
-# Optional: Prevent committing Postman-generated export files
-*.postman_collection.json
-*.postman_environment.json
-
-# Optional: Swagger UI artifacts
-swagger.json
-swagger.yaml
-
-# MongoDB
-dump/
-data/
+# IDE
+.idea/
+.vscode/

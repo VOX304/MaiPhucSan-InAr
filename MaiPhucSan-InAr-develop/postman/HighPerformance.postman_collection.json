@@ -1,0 +1,150 @@
+{
+  "info": {
+    "name": "HighPerformance API",
+    "_postman_id": "d1a1b7b5-0000-0000-0000-000000000000",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Auth - Login (CEO)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/auth/login",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "auth",
+            "login"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\"username\":\"ceo\",\"password\":\"ceo123\"}"
+        }
+      }
+    },
+    {
+      "name": "Salesmen - List",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/salesmen",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "salesmen"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Social - List for E1001",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/performance/social/E1001?year={{year}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "performance",
+            "social",
+            "E1001"
+          ],
+          "query": [
+            {
+              "key": "year",
+              "value": "{{year}}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Bonus - Compute (CEO)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/bonus/E1001/compute?year={{year}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "bonus",
+            "E1001",
+            "compute"
+          ],
+          "query": [
+            {
+              "key": "year",
+              "value": "{{year}}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Odoo - Employees (HR/CEO)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/odoo/employees",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "odoo",
+            "employees"
+          ]
+        }
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000/api/v1"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "year",
+      "value": "2026"
+    }
+  ]
+}

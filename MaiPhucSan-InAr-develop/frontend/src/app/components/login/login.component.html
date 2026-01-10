@@ -1,0 +1,30 @@
+<div class="container">
+  <mat-card>
+    <h2>Login</h2>
+
+    <p>
+      Login uses the backend endpoint <code>/api/v1/auth/login</code> and stores a JWT locally.
+      Demo users are created via <code>npm run seed</code> in the backend.
+    </p>
+
+    <form [formGroup]="form" (ngSubmit)="submit()">
+      <mat-form-field appearance="fill" style="width: 100%">
+        <mat-label>Username</mat-label>
+        <input matInput formControlName="username" placeholder="ceo / hr / sales1" />
+      </mat-form-field>
+
+      <mat-form-field appearance="fill" style="width: 100%">
+        <mat-label>Password</mat-label>
+        <input matInput type="password" formControlName="password" placeholder="••••••" />
+      </mat-form-field>
+
+      <div *ngIf="error" style="margin: 10px 0; color: #b00020">
+        {{ error }}
+      </div>
+
+      <button mat-raised-button color="primary" type="submit" [disabled]="loading || form.invalid">
+        {{ loading ? 'Logging in…' : 'Login' }}
+      </button>
+    </form>
+  </mat-card>
+</div>
