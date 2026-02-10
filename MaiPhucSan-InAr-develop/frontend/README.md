@@ -558,6 +558,37 @@ npm test -- --coverage
 npm test -- --watch
 ```
 
+### Local Test Prerequisites & Quick Checks
+
+Before running frontend tests or starting the dev server, ensure:
+
+- Node.js (v18+) and npm (v9+)
+- Angular CLI installed globally (optional but useful): `npm install -g @angular/cli`
+- Backend API running at `http://localhost:3000` (for integration-like runs)
+
+Quick local verification commands:
+
+```bash
+# Install deps
+cd frontend
+npm install
+
+# Run unit tests
+npm test
+
+# Run dev server (manual check in browser)
+npm start
+# Open http://localhost:4200 and verify the app loads
+
+# Run tests with coverage
+npm test -- --coverage
+```
+
+Expected results:
+- `npm test` runs unit tests (component/service tests)
+- `npm start` launches dev server at `http://localhost:4200` and the app should load without console errors
+
+
 ### Test Structure
 ```typescript
 describe('MyComponent', () => {
