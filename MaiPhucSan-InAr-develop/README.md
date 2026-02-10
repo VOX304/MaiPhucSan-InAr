@@ -283,6 +283,53 @@ node scripts/benchmark-bonus.js
 # Measure compute time with/without caching
 ```
 
+### How to Test Each Part (Prerequisites & Commands)
+
+Root (project-level):
+
+- Requires: Docker & Docker Compose installed
+- Quick checks:
+
+```bash
+# Start required containers (MongoDB + Camunda)
+docker-compose up -d
+
+# Verify containers
+docker-compose ps
+```
+
+Backend (`/backend`):
+
+- Requires: Node.js v18+, npm v9+
+- Commands:
+
+```bash
+cd backend
+npm install
+npm run seed    # seed demo data
+npm test        # unit tests
+# Optional: enable integration tests
+$env:RUN_INTEGRATION = 'true'; npm test
+```
+
+Frontend (`/frontend`):
+
+- Requires: Node.js v18+, npm v9+, optional global Angular CLI (`npm i -g @angular/cli`)
+- Commands:
+
+```bash
+cd frontend
+npm install
+npm start       # dev server at http://localhost:4200
+npm test        # unit tests
+npm run build   # production build
+```
+
+Notes:
+- Make sure the backend API is running at `http://localhost:3000` for the frontend dev server to communicate (proxy config uses `/api`).
+- If you plan to run integration/E2E tests, start required external services (MongoDB, Camunda) or set up service stubs.
+
+
 ---
 
 ## 🔗 Integrations
