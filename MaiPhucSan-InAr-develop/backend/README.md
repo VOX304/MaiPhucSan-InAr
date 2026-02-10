@@ -611,6 +611,34 @@ npm test
 # Full suite with real services (requires Docker containers running)
 ```
 
+### Local Test Prerequisites & Quick Checks
+
+Before running tests locally, ensure the following are installed and running:
+
+- Node.js (v18+), npm (v9+)
+- MongoDB (local or via Docker)
+- (Optional) Redis if `CACHE_USE_REDIS=true`
+
+Quick local verification commands:
+
+```powershell
+# Start MongoDB via Docker (if not already running)
+docker-compose up -d mongo
+
+# Install deps and run unit tests
+cd backend
+npm install
+npm test
+
+# Run integration tests (requires services)
+$env:RUN_INTEGRATION = 'true'; npm test
+```
+
+Expected results:
+- `npm test` should run unit tests (16+ passing)
+- Integration tests require `mongo` (and optional external service stubs) and will be skipped/fail without them
+
+
 ### Test Coverage
 ```bash
 npm test -- --coverage
