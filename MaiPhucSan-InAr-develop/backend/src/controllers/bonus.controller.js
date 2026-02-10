@@ -52,7 +52,8 @@ exports.compute = async (req, res, next) => {
 
     const { social, orders } = await loadRecords(employeeId, year);
 
-    const totals = computeTotals(social, orders);
+    // Use async cached compute (uses Redis when enabled)
+    const totals = await computeTotalsAsync(social, orders);
 
     const details = {
       ...totals,
@@ -163,7 +164,7 @@ exports.approveCeo = async (req, res, next) => {
 
     await doc.save();
 
-    return res.json({ data: doc.toObject() });
+    return res.json({ id: doc._id, message: 'Approved by CEO', status: doc.status });
   } catch (err) {
     return next(err);
   }
@@ -196,7 +197,7 @@ exports.approveHrAndStore = async (req, res, next) => {
     doc.storedInOrangeHrmAt = new Date();
     await doc.save();
 
-    return res.json({ data: doc.toObject() });
+    return res.json({ id: doc._id, message: 'Approved by HR and stored in OrangeHRM', status: doc.status });
   } catch (err) {
     return next(err);
   }
@@ -220,7 +221,7 @@ exports.releaseToSalesman = async (req, res, next) => {
     doc.releasedToSalesmanAt = new Date();
     await doc.save();
 
-    return res.json({ data: doc.toObject() });
+    return res.json({ id: doc._id, message: 'Released to salesman', status: doc.status });
   } catch (err) {
     return next(err);
   }
@@ -244,7 +245,7 @@ exports.confirmBySalesman = async (req, res, next) => {
     doc.salesmanConfirmedAt = new Date();
     await doc.save();
 
-    return res.json({ data: doc.toObject() });
+    return res.json({ id: doc._id, message: 'Confirmed by salesman', status: doc.status });
   } catch (err) {
     return next(err);
   }

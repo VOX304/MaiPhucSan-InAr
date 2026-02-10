@@ -13,6 +13,9 @@
  */
 const env = require('../config/env');
 
+const cacheService = require('./cache.service');
+const CACHE_TTL_SECONDS = Number(process.env.BONUS_CACHE_TTL_SECONDS || 60);
+
 function round2(value) {
   return Math.round((Number(value) + Number.EPSILON) * 100) / 100;
 }
@@ -160,6 +163,7 @@ function computeOrdersTotal(orders) {
  * @param {Array<object>} socialRecords
  * @param {Array<object>} orderRecords
  */
+// Synchronous compute without cache (keeps compatibility)
 function computeTotals(socialRecords, orderRecords) {
   const social = computeSocialTotal(socialRecords || []);
   const orders = computeOrdersTotal(orderRecords || []);
@@ -178,8 +182,28 @@ function computeTotals(socialRecords, orderRecords) {
   };
 }
 
+// Async compute that uses cacheService (Redis or memory)
+async function computeTotalsAsync(socialRecords, orderRecords) {
+  const key = JSON.stringify({ s: socialRecords || [], o: orderRecords || [] });
+  try {
+    const cached = await cacheService.get(key);
+    if (cached) return cached;
+  } catch (e) {
+    // ignore cache errors
+  }
+
+  const result = computeTotals(socialRecords, orderRecords);
+  try {
+    await cacheService.set(key, result, CACHE_TTL_SECONDS);
+  } catch (e) {
+    // ignore cache set failures
+  }
+  return result;
+}
+
 module.exports = {
   computeTotals,
+  computeTotalsAsync,
   computeSocialRecordBonus,
   computeOrderRecordBonus,
   computeSocialTotal,

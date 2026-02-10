@@ -7,6 +7,19 @@ export interface ApiResponse<T> {
   warning?: string;
 }
 
+/**
+ * Simplified response for creation/action endpoints.
+ * New backend returns {id, message, status/bonusEur} instead of full data.
+ */
+export interface ApiActionResponse {
+  id?: string;
+  message?: string;
+  status?: string;
+  bonusEur?: number;
+  error?: string;
+  warning?: string;
+}
+
 export type Role = 'CEO' | 'HR' | 'SALESMAN';
 
 export interface AuthLoginRequest {
@@ -41,7 +54,7 @@ export interface SocialPerformanceRecord {
   criterionKey: string;
   criterionName: string;
   targetValue: number;
-  actualValue: number;
+  actualValue?: number; // Now optional on create
   weight: number;
   supervisorRating?: number;
   peerRating?: number;

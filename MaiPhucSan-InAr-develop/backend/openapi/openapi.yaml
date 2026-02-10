@@ -12,7 +12,7 @@ info:
     - TR8: integration tests can stub dependencies
     - TR9: optional Camunda workflow endpoints
 servers:
-  - url: http://localhost:3000/api/v1
+  - url: http://localhost:3000
 
 components:
   securitySchemes:
@@ -48,6 +48,7 @@ components:
         employeeId:
           type: string
           nullable: true
+          pattern: '^E\\d+$'
 
     AuthLoginResponse:
       type: object
@@ -73,7 +74,9 @@ components:
       type: object
       properties:
         _id: { type: string }
-        employeeId: { type: string }
+        employeeId:
+          type: string
+          pattern: '^E\\d+$'
         name: { type: string }
         department: { type: string }
         performanceYear: { type: integer }
@@ -87,6 +90,18 @@ components:
         data:
           $ref: "#/components/schemas/Salesman"
 
+    CreateSalesmanRequest:
+      type: object
+      required: [employeeId]
+      properties:
+        employeeId:
+          type: string
+          pattern: '^E\\d+$'
+        name: { type: string }
+        department: { type: string }
+        performanceYear: { type: integer }
+
+
     EnvelopeSalesmen:
       type: object
       properties:
@@ -99,7 +114,9 @@ components:
       type: object
       properties:
         _id: { type: string }
-        salesmanEmployeeId: { type: string }
+        salesmanEmployeeId:
+          type: string
+          pattern: '^E\\d+$'
         year: { type: integer }
         criterionKey: { type: string }
         criterionName: { type: string }
@@ -124,11 +141,30 @@ components:
             socialTotalEur:
               type: number
 
+    CreateSocialPerformanceRequest:
+      type: object
+      required: [salesmanEmployeeId, year, criterionKey, criterionName, targetValue, weight]
+      properties:
+        salesmanEmployeeId:
+          type: string
+          pattern: '^E\\d+$'
+        year: { type: integer }
+        criterionKey: { type: string }
+        criterionName: { type: string }
+        targetValue: { type: number, minimum: 0 }
+        actualValue: { type: number, minimum: 0 }
+        weight: { type: number, minimum: 0, maximum: 1 }
+        supervisorRating: { type: number, minimum: 1, maximum: 5 }
+        peerRating: { type: number, minimum: 1, maximum: 5 }
+        remark: { type: string }
+
     OrderEvaluationRecord:
       type: object
       properties:
         _id: { type: string }
-        salesmanEmployeeId: { type: string }
+        salesmanEmployeeId:
+          type: string
+          pattern: '^E\\d+$'
         year: { type: integer }
         orderId: { type: string }
         productName: { type: string }
@@ -152,12 +188,31 @@ components:
                 $ref: "#/components/schemas/OrderEvaluationRecord"
             ordersTotalEur:
               type: number
+    
+    CreateOrderEvaluationRequest:
+      type: object
+      required: [salesmanEmployeeId, year, orderId]
+      properties:
+        salesmanEmployeeId:
+          type: string
+          pattern: '^E\\d+$'
+        year: { type: integer }
+        orderId: { type: string }
+        productName: { type: string }
+        clientName: { type: string }
+        clientRanking: { type: number }
+        closingProbability: { type: number }
+        itemsCount: { type: number }
+        revenueEur: { type: number }
+        remark: { type: string }
 
     BonusComputation:
       type: object
       properties:
         _id: { type: string }
-        salesmanEmployeeId: { type: string }
+        salesmanEmployeeId:
+          type: string
+          pattern: '^E\\d+$'
         year: { type: integer }
         socialTotalEur: { type: number }
         ordersTotalEur: { type: number }
@@ -194,7 +249,9 @@ components:
       type: object
       properties:
         _id: { type: string }
-        salesmanEmployeeId: { type: string }
+        salesmanEmployeeId:
+          type: string
+          pattern: '^E\\d+$'
         year: { type: integer }
         title: { type: string }
         description: { type: string }
@@ -220,7 +277,9 @@ components:
           items:
             type: object
             properties:
-              employeeId: { type: string }
+              employeeId:
+                type: string
+                pattern: '^E\\d+$'
               totalBonusEur: { type: number }
               socialTotalEur: { type: number }
               ordersTotalEur: { type: number }
@@ -254,8 +313,54 @@ components:
           $ref: "#/components/schemas/DependenciesHealth"
 
 paths:
-  /auth/login:
+  /:
+    get:
+      operationId: rootRedirect
+      summary: API root (redirects to /api/v1)
+      security: []
+      responses:
+        "302":
+          description: Redirect to /api/v1
+
+  /api/v1:
+    get:
+      operationId: apiRoot
+      summary: API discovery endpoint
+      security: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string }
+                  docs: { type: string }
+                  openapi: { type: string }
+
+  /openapi.yaml:
+    get:
+      operationId: getOpenAPIYAML
+      summary: OpenAPI spec in YAML format
+      security: []
+      responses:
+        "200":
+          description: OK
+
+  /openapi.json:
+    get:
+      operationId: getOpenAPIJSON
+      summary: OpenAPI spec in JSON format
+      security: []
+      responses:
+        "200":
+          description: OK
+
+  /api/v1/auth/login:
     post:
+      operationId: authLogin
+      security: []
       summary: Login and receive JWT
       requestBody:
         required: true
@@ -270,11 +375,14 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/EnvelopeAuthLogin"
+        "400":
+          description: Bad Request
         "401":
           description: Unauthorized
 
-  /auth/me:
+  /api/v1/auth/me:
     get:
+      operationId: authMe
       summary: Get current user
       security:
         - bearerAuth: []
@@ -285,9 +393,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/EnvelopeAuthUser"
+        "400":
+          description: Bad Request
 
-  /salesmen:
+  /api/v1/salesmen:
     get:
+      operationId: listSalesmen
       summary: List salesmen
       security:
         - bearerAuth: []
@@ -298,10 +409,19 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/EnvelopeSalesmen"
+        "400":
+          description: Bad Request
     post:
+      operationId: createSalesman
       summary: Create salesman (HR)
       security:
         - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSalesmanRequest"
       responses:
         "201":
           description: Created
@@ -309,18 +429,24 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/EnvelopeSalesman"
+        "400":
+          description: Bad Request
 
-  /salesmen/consolidated:
+  /api/v1/salesmen/consolidated:
     get:
+      operationId: consolidatedSalesmen
       summary: Consolidated view for all salesmen
       security:
         - bearerAuth: []
       responses:
         "200":
           description: OK
+        "400":
+          description: Bad Request
 
-  /salesmen/{employeeId}:
+  /api/v1/salesmen/{employeeId}:
     get:
+      operationId: getSalesmanByEmployeeId
       summary: Get salesman by employeeId
       security:
         - bearerAuth: []
@@ -328,7 +454,9 @@ paths:
         - in: path
           name: employeeId
           required: true
-          schema: { type: string }
+          schema:
+            type: string
+            pattern: '^E\\d+$'
       responses:
         "200":
           description: OK
@@ -338,7 +466,10 @@ paths:
                 $ref: "#/components/schemas/EnvelopeSalesman"
         "404":
           description: Not found
+        "400":
+          description: Bad Request
     patch:
+      operationId: updateSalesman
       summary: Update salesman (HR)
       security:
         - bearerAuth: []
@@ -346,13 +477,18 @@ paths:
         - in: path
           name: employeeId
           required: true
-          schema: { type: string }
+          schema:
+            type: string
+            pattern: '^E\\d+$'
       responses:
         "200":
           description: OK
+        "400":
+          description: Bad Request
 
-  /salesmen/{employeeId}/sync:
+  /api/v1/salesmen/{employeeId}/sync:
     post:
+      operationId: syncSalesmanFromOrangeHrm
       summary: Sync salesman master data from OrangeHRM
       security:
         - bearerAuth: []
@@ -360,13 +496,18 @@ paths:
         - in: path
           name: employeeId
           required: true
-          schema: { type: string }
+          schema:
+            type: string
+            pattern: '^E\\d+$'
       responses:
         "200":
           description: OK
+        "400":
+          description: Bad Request
 
-  /salesmen/{employeeId}/consolidated:
+  /api/v1/salesmen/{employeeId}/consolidated:
     get:
+      operationId: consolidatedSalesman
       summary: Consolidated view for one salesman
       security:
         - bearerAuth: []
@@ -374,16 +515,21 @@ paths:
         - in: path
           name: employeeId
           required: true
-          schema: { type: string }
+          schema:
+            type: string
+            pattern: '^E\\d+$'
         - in: query
           name: year
           schema: { type: integer }
       responses:
         "200":
           description: OK
+        "400":
+          description: Bad Request
 
-  /performance/social/{employeeId}:
+  /api/v1/performance/social/{employeeId}:
     get:
+      operationId: listSocialPerformanceForSalesman
       summary: List social performance records for a salesman
       security:
         - bearerAuth: []
@@ -391,7 +537,9 @@ paths:
         - in: path
           name: employeeId
           required: true
-          schema: { type: string }
+          schema:
+            type: string
+            pattern: '^E\\d+$'
         - in: query
           name: year
           schema: { type: integer }
@@ -402,18 +550,30 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/EnvelopeSocialRecords"
+        "400":
+          description: Bad Request
 
-  /performance/social:
+  /api/v1/performance/social:
     post:
+      operationId: createSocialPerformance
       summary: Create a social performance record (HR)
       security:
         - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSocialPerformanceRequest"
       responses:
         "201":
           description: Created
+        "400":
+          description: Bad Request
 
-  /performance/social/records/{recordId}:
+  /api/v1/performance/social/records/{recordId}:
     patch:
+      operationId: updateSocialPerformanceRecord
       summary: Update target/actual/ratings of a social performance record (HR)
       security:
         - bearerAuth: []
@@ -421,13 +581,18 @@ paths:
         - in: path
           name: recordId
           required: true
-          schema: { type: string }
+          schema:
+            type: string
+            pattern: '^[0-9a-fA-F]{24}$'
       responses:
         "200":
           description: OK
+        "400":
+          description: Bad Request
 
-  /orders/{employeeId}:
+  /api/v1/orders/{employeeId}:
     get:
+      operationId: listOrderEvaluationRecords
       summary: List order evaluation records for a salesman (optional refresh from OpenCRX)
       security:
         - bearerAuth: []
@@ -435,7 +600,9 @@ paths:
         - in: path
           name: employeeId
           required: true
-          schema: { type: string }
+          schema:
+            type: string
+            pattern: '^E\\d+$'
         - in: query
           name: year
           schema: { type: integer }
@@ -449,18 +616,30 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/EnvelopeOrders"
+        "400":
+          description: Bad Request
 
-  /orders:
+  /api/v1/orders:
     post:
+      operationId: createOrderEvaluation
       summary: Create an order evaluation record (HR)
       security:
         - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateOrderEvaluationRequest"
       responses:
         "201":
           description: Created
+        "400":
+          description: Bad Request
 
-  /bonus/{employeeId}:
+  /api/v1/bonus/{employeeId}:
     get:
+      operationId: getBonusComputation
       summary: Get bonus computation for a salesman
       security:
         - bearerAuth: []
@@ -468,7 +647,9 @@ paths:
         - in: path
           name: employeeId
           required: true
-          schema: { type: string }
+          schema:
+            type: string
+            pattern: '^E\\d+$'
         - in: query
           name: year
           schema: { type: integer }
@@ -481,9 +662,12 @@ paths:
                 $ref: "#/components/schemas/EnvelopeBonus"
         "404":
           description: Not found
+        "400":
+          description: Bad Request
 
-  /bonus/{employeeId}/compute:
+  /api/v1/bonus/{employeeId}/compute:
     post:
+      operationId: computeBonusForSalesman
       summary: Compute bonus for a salesman (CEO)
       security:
         - bearerAuth: []
@@ -491,7 +675,9 @@ paths:
         - in: path
           name: employeeId
           required: true
-          schema: { type: string }
+          schema:
+            type: string
+            pattern: '^E\\d+$'
         - in: query
           name: year
           schema: { type: integer }
@@ -502,9 +688,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/EnvelopeBonus"
+        "400":
+          description: Bad Request
 
-  /bonus/{employeeId}/history:
+  /api/v1/bonus/{employeeId}/history:
     get:
+      operationId: listBonusHistory
       summary: List bonus computations of a salesman
       security:
         - bearerAuth: []
@@ -512,7 +701,9 @@ paths:
         - in: path
           name: employeeId
           required: true
-          schema: { type: string }
+          schema:
+            type: string
+            pattern: '^E\\d+$'
       responses:
         "200":
           description: OK
@@ -520,9 +711,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/EnvelopeBonusList"
+        "400":
+          description: Bad Request
 
-  /bonus/{employeeId}/remarks:
+  /api/v1/bonus/{employeeId}/remarks:
     post:
+      operationId: addBonusRemark
       summary: Add a remark to a bonus computation
       security:
         - bearerAuth: []
@@ -530,49 +724,103 @@ paths:
         - in: path
           name: employeeId
           required: true
-          schema: { type: string }
+          schema:
+            type: string
+            pattern: '^E\\d+$'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [text]
+              properties:
+                text: { type: string }
       responses:
         "200":
           description: OK
+        "400":
+          description: Bad Request
 
-  /bonus/{employeeId}/approve/ceo:
+  /api/v1/bonus/{employeeId}/approve/ceo:
     post:
+      operationId: approveBonusCeo
+      parameters:
+        - in: path
+          name: employeeId
+          required: true
+          schema:
+            type: string
+            pattern: '^E\\d+$'
       summary: CEO approves a computed bonus
       security:
         - bearerAuth: []
       responses:
         "200":
           description: OK
+        "400":
+          description: Bad Request
 
-  /bonus/{employeeId}/approve/hr:
+  /api/v1/bonus/{employeeId}/approve/hr:
     post:
+      operationId: approveBonusHr
+      parameters:
+        - in: path
+          name: employeeId
+          required: true
+          schema:
+            type: string
+            pattern: '^E\\d+$'
       summary: HR approves and stores total bonus in OrangeHRM
       security:
         - bearerAuth: []
       responses:
         "200":
           description: OK
+        "400":
+          description: Bad Request
 
-  /bonus/{employeeId}/release:
+  /api/v1/bonus/{employeeId}/release:
     post:
+      operationId: releaseFinalBonus
+      parameters:
+        - in: path
+          name: employeeId
+          required: true
+          schema:
+            type: string
+            pattern: '^E\\d+$'
       summary: Release final bonus to salesman
       security:
         - bearerAuth: []
       responses:
         "200":
           description: OK
+        "400":
+          description: Bad Request
 
-  /bonus/{employeeId}/confirm:
+  /api/v1/bonus/{employeeId}/confirm:
     post:
+      operationId: confirmBonusBySalesman
+      parameters:
+        - in: path
+          name: employeeId
+          required: true
+          schema:
+            type: string
+            pattern: '^E\\d+$'
       summary: Salesman confirms final bonus computation
       security:
         - bearerAuth: []
       responses:
         "200":
           description: OK
+        "400":
+          description: Bad Request
 
-  /qualifications/{employeeId}:
+  /api/v1/qualifications/{employeeId}:
     get:
+      operationId: listQualifications
       summary: List qualifications of a salesman
       security:
         - bearerAuth: []
@@ -580,7 +828,9 @@ paths:
         - in: path
           name: employeeId
           required: true
-          schema: { type: string }
+          schema:
+            type: string
+            pattern: '^E\\d+$'
       responses:
         "200":
           description: OK
@@ -588,7 +838,10 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/EnvelopeQualifications"
+        "400":
+          description: Bad Request
     post:
+      operationId: createQualification
       summary: Create a qualification (CEO)
       security:
         - bearerAuth: []
@@ -596,13 +849,36 @@ paths:
         - in: path
           name: employeeId
           required: true
-          schema: { type: string }
+          schema:
+            type: string
+            pattern: '^E\\d+$'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [year, title]
+              properties:
+                year:
+                  type: integer
+                  minimum: 2000
+                  maximum: 2100
+                title:
+                  type: string
+                description:
+                  type: string
+                storeInOrangeHrm:
+                  type: boolean
       responses:
         "201":
           description: Created
+        "400":
+          description: Bad Request
 
-  /statistics/bonus:
+  /api/v1/statistics/bonus:
     get:
+      operationId: getBonusStatistics
       summary: Bonus totals for charts
       security:
         - bearerAuth: []
@@ -613,18 +889,31 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/EnvelopeStatistics"
+        "400":
+          description: Bad Request
 
-  /workflow/bonus/{employeeId}/start:
+  /api/v1/workflow/bonus/{employeeId}/start:
     post:
+      operationId: startCamundaBonusWorkflow
+      parameters:
+        - in: path
+          name: employeeId
+          required: true
+          schema:
+            type: string
+            pattern: '^E\\d+$'
       summary: Start Camunda bonus approval process
       security:
         - bearerAuth: []
       responses:
         "200":
           description: OK
+        "400":
+          description: Bad Request
 
-  /workflow/process/{processInstanceId}/tasks:
+  /api/v1/workflow/process/{processInstanceId}/tasks:
     get:
+      operationId: listCamundaTasksForProcess
       summary: List Camunda tasks for a process instance
       security:
         - bearerAuth: []
@@ -632,13 +921,18 @@ paths:
         - in: path
           name: processInstanceId
           required: true
-          schema: { type: string }
+          schema:
+            type: string
+            minLength: 1
       responses:
         "200":
           description: OK
+        "400":
+          description: Bad Request
 
-  /workflow/tasks/{taskId}/complete:
+  /api/v1/workflow/tasks/{taskId}/complete:
     post:
+      operationId: completeCamundaTask
       summary: Complete a Camunda task
       security:
         - bearerAuth: []
@@ -646,23 +940,33 @@ paths:
         - in: path
           name: taskId
           required: true
-          schema: { type: string }
+          schema:
+            type: string
+            minLength: 1
       responses:
         "200":
           description: OK
+        "400":
+          description: Bad Request
 
-  /odoo/employees:
+  /api/v1/odoo/employees:
     get:
+      operationId: getOdooEmployees
       summary: Fetch employees from Odoo (if configured)
       security:
         - bearerAuth: []
       responses:
         "200":
           description: OK
+        "400":
+          description: Bad Request
 
-  /integration/health:
+  /api/v1/integration/health:
     get:
+      operationId: getIntegrationHealth
       summary: Dependency reachability overview (OrangeHRM/OpenCRX/MongoDB/Camunda)
+      security:
+        - bearerAuth: []
       responses:
         "200":
           description: OK
@@ -670,3 +974,5 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/EnvelopeDependenciesHealth"
+        "400":
+          description: Bad Request

@@ -2,8 +2,11 @@ const router = require('express').Router();
 const ctrl = require('../controllers/social-performance.controller');
 const { authRequired } = require('../middleware/auth.middleware');
 const { requireRole, allowSelfOrRoles } = require('../middleware/roles.middleware');
+const { validateObjectId, validateEmployeeId } = require('../middleware/params.middleware');
 
 router.use(authRequired);
+router.param('recordId', validateObjectId);
+router.param('employeeId', validateEmployeeId);
 
 // List records for a salesman (CEO/HR or the salesman himself)
 router.get(

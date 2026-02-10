@@ -1,0 +1,4 @@
+[2026-02-10T16:22:07.204Z] INFO: Starting integration tests
+[2026-02-10T16:22:17.284Z] INFO: Malformed request handled
+[2026-02-10T16:22:27.230Z] INFO: Performance check passed {"duration":"3ms"}
+[2026-02-10T16:22:27.236Z] INFO: Integration tests completed

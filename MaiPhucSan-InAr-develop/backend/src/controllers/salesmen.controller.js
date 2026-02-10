@@ -11,11 +11,12 @@ const Joi = require('joi');
 const { Salesman } = require('../models/salesman.model');
 const { SocialPerformanceRecord } = require('../models/social-performance.model');
 const { OrderEvaluationRecord } = require('../models/order-evaluation.model');
-const { computeTotals } = require('../services/bonus.service');
+const { computeTotalsAsync } = require('../services/bonus.service');
 const { OrangeHRMService } = require('../services/orangehrm.service');
 
 const createSchema = Joi.object({
-  employeeId: Joi.string().min(1).max(50).required(),
+  // Employee IDs should follow the 'E' + digits format (e.g. E1001)
+  employeeId: Joi.string().pattern(/^E\d+$/).required(),
   name: Joi.string().min(1).max(200).required(),
   department: Joi.string().min(1).max(200).required(),
   performanceYear: Joi.number().integer().min(2000).max(2100).required(),
@@ -125,21 +126,12 @@ exports.listConsolidated = async (req, res, next) => {
 
     const items = [];
     for (const s of salesmen) {
-      const social = await SocialPerformanceRecord.find({
-        salesmanEmployeeId: s.employeeId,
-        year
-      })
-        .lean()
-        .exec();
+      const [social, orders] = await Promise.all([
+        SocialPerformanceRecord.find({ salesmanEmployeeId: s.employeeId, year }).lean().exec(),
+        OrderEvaluationRecord.find({ salesmanEmployeeId: s.employeeId, year }).lean().exec()
+      ]);
 
-      const orders = await OrderEvaluationRecord.find({
-        salesmanEmployeeId: s.employeeId,
-        year
-      })
-        .lean()
-        .exec();
-
-      const totals = computeTotals(social, orders);
+      const totals = await computeTotalsAsync(social, orders);
 
       items.push({
         salesman: s,
@@ -169,21 +161,12 @@ exports.getConsolidated = async (req, res, next) => {
     const s = await Salesman.findOne({ employeeId }).lean().exec();
     if (!s) return res.status(404).json({ error: 'Salesman not found' });
 
-    const social = await SocialPerformanceRecord.find({
-      salesmanEmployeeId: employeeId,
-      year
-    })
-      .lean()
-      .exec();
+    const [social, orders] = await Promise.all([
+      SocialPerformanceRecord.find({ salesmanEmployeeId: employeeId, year }).lean().exec(),
+      OrderEvaluationRecord.find({ salesmanEmployeeId: employeeId, year }).lean().exec()
+    ]);
 
-    const orders = await OrderEvaluationRecord.find({
-      salesmanEmployeeId: employeeId,
-      year
-    })
-      .lean()
-      .exec();
-
-    const totals = computeTotals(social, orders);
+    const totals = await computeTotalsAsync(social, orders);
 
     return res.json({
       data: {

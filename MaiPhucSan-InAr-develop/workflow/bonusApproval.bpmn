@@ -1,76 +1,81 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                  xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
-                  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
-                  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
-                  xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
-                  xmlns:camunda="http://camunda.org/schema/1.0/bpmn"
-                  id="Definitions_1"
-                  targetNamespace="http://example.com/bonusApproval">
-  <bpmn:process id="bonusApproval" name="Bonus Approval Workflow" isExecutable="true">
-    <bpmn:startEvent id="StartEvent_1" name="Start">
+  xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+  xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+  xmlns:camunda="http://camunda.org/schema/1.0/bpmn"
+  id="Definitions_1"
+  targetNamespace="http://example.com/bonus">
+
+  <bpmn:process id="bonusApproval" name="Bonus Approval" isExecutable="true"
+    camunda:historyTimeToLive="30">
+
+    <bpmn:startEvent id="StartEvent_1" name="Start Bonus Process">
       <bpmn:outgoing>Flow_1</bpmn:outgoing>
     </bpmn:startEvent>
 
-    <bpmn:userTask id="Task_CEO" name="CEO approves bonus" camunda:assignee="ceo">
+    <bpmn:userTask id="UserTask_CEO" name="CEO approves bonus" camunda:candidateGroups="CEO">
       <bpmn:incoming>Flow_1</bpmn:incoming>
       <bpmn:outgoing>Flow_2</bpmn:outgoing>
     </bpmn:userTask>
 
-    <bpmn:userTask id="Task_HR" name="HR approves bonus" camunda:assignee="hr">
+    <bpmn:userTask id="UserTask_HR" name="HR approves and stores bonus" camunda:candidateGroups="HR">
       <bpmn:incoming>Flow_2</bpmn:incoming>
       <bpmn:outgoing>Flow_3</bpmn:outgoing>
     </bpmn:userTask>
 
-    <bpmn:userTask id="Task_Salesman" name="Salesman confirms bonus" camunda:assignee="${employeeId}">
+    <bpmn:userTask id="UserTask_Salesman" name="Salesman confirms bonus" camunda:candidateGroups="SALESMAN">
       <bpmn:incoming>Flow_3</bpmn:incoming>
       <bpmn:outgoing>Flow_4</bpmn:outgoing>
     </bpmn:userTask>
 
-    <bpmn:endEvent id="EndEvent_1" name="Done">
+    <bpmn:endEvent id="EndEvent_1" name="Process Completed">
       <bpmn:incoming>Flow_4</bpmn:incoming>
     </bpmn:endEvent>
 
-    <bpmn:sequenceFlow id="Flow_1" sourceRef="StartEvent_1" targetRef="Task_CEO"/>
-    <bpmn:sequenceFlow id="Flow_2" sourceRef="Task_CEO" targetRef="Task_HR"/>
-    <bpmn:sequenceFlow id="Flow_3" sourceRef="Task_HR" targetRef="Task_Salesman"/>
-    <bpmn:sequenceFlow id="Flow_4" sourceRef="Task_Salesman" targetRef="EndEvent_1"/>
+    <bpmn:sequenceFlow id="Flow_1" sourceRef="StartEvent_1" targetRef="UserTask_CEO"/>
+    <bpmn:sequenceFlow id="Flow_2" sourceRef="UserTask_CEO" targetRef="UserTask_HR"/>
+    <bpmn:sequenceFlow id="Flow_3" sourceRef="UserTask_HR" targetRef="UserTask_Salesman"/>
+    <bpmn:sequenceFlow id="Flow_4" sourceRef="UserTask_Salesman" targetRef="EndEvent_1"/>
+
   </bpmn:process>
 
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
     <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="bonusApproval">
-      <bpmndi:BPMNShape id="Shape_Start" bpmnElement="StartEvent_1">
-        <dc:Bounds x="152" y="102" width="36" height="36"/>
+      <bpmndi:BPMNShape id="StartEvent_1_di" bpmnElement="StartEvent_1">
+        <dc:Bounds x="150" y="120" width="36" height="36"/>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Shape_CEO" bpmnElement="Task_CEO">
-        <dc:Bounds x="250" y="80" width="180" height="80"/>
+      <bpmndi:BPMNShape id="UserTask_CEO_di" bpmnElement="UserTask_CEO">
+        <dc:Bounds x="240" y="100" width="180" height="80"/>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Shape_HR" bpmnElement="Task_HR">
-        <dc:Bounds x="470" y="80" width="180" height="80"/>
+      <bpmndi:BPMNShape id="UserTask_HR_di" bpmnElement="UserTask_HR">
+        <dc:Bounds x="470" y="100" width="200" height="80"/>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Shape_Salesman" bpmnElement="Task_Salesman">
-        <dc:Bounds x="690" y="80" width="200" height="80"/>
+      <bpmndi:BPMNShape id="UserTask_Salesman_di" bpmnElement="UserTask_Salesman">
+        <dc:Bounds x="720" y="100" width="220" height="80"/>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Shape_End" bpmnElement="EndEvent_1">
-        <dc:Bounds x="930" y="102" width="36" height="36"/>
+      <bpmndi:BPMNShape id="EndEvent_1_di" bpmnElement="EndEvent_1">
+        <dc:Bounds x="990" y="120" width="36" height="36"/>
       </bpmndi:BPMNShape>
 
-      <bpmndi:BPMNEdge id="Edge_Flow_1" bpmnElement="Flow_1">
-        <di:waypoint x="188" y="120"/>
-        <di:waypoint x="250" y="120"/>
+      <bpmndi:BPMNEdge id="Flow_1_di" bpmnElement="Flow_1">
+        <di:waypoint x="186" y="138"/>
+        <di:waypoint x="240" y="140"/>
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Edge_Flow_2" bpmnElement="Flow_2">
-        <di:waypoint x="430" y="120"/>
-        <di:waypoint x="470" y="120"/>
+      <bpmndi:BPMNEdge id="Flow_2_di" bpmnElement="Flow_2">
+        <di:waypoint x="420" y="140"/>
+        <di:waypoint x="470" y="140"/>
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Edge_Flow_3" bpmnElement="Flow_3">
-        <di:waypoint x="650" y="120"/>
-        <di:waypoint x="690" y="120"/>
+      <bpmndi:BPMNEdge id="Flow_3_di" bpmnElement="Flow_3">
+        <di:waypoint x="670" y="140"/>
+        <di:waypoint x="720" y="140"/>
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Edge_Flow_4" bpmnElement="Flow_4">
-        <di:waypoint x="890" y="120"/>
-        <di:waypoint x="930" y="120"/>
+      <bpmndi:BPMNEdge id="Flow_4_di" bpmnElement="Flow_4">
+        <di:waypoint x="940" y="140"/>
+        <di:waypoint x="990" y="138"/>
       </bpmndi:BPMNEdge>
     </bpmndi:BPMNPlane>
   </bpmndi:BPMNDiagram>
+
 </bpmn:definitions>

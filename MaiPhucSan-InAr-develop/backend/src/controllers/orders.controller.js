@@ -11,7 +11,8 @@ const { OpenCRXService } = require('../services/opencrx.service');
 const { computeOrderRecordBonus, computeOrdersTotal } = require('../services/bonus.service');
 
 const createSchema = Joi.object({
-  salesmanEmployeeId: Joi.string().min(1).max(50).required(),
+  // Salesman employee IDs follow the 'E' + digits format (e.g. E1001)
+  salesmanEmployeeId: Joi.string().pattern(/^E\d+$/).required(),
   year: Joi.number().integer().min(2000).max(2100).required(),
   orderId: Joi.string().min(1).max(200).required(),
   productName: Joi.string().allow('').optional(),
@@ -84,7 +85,7 @@ exports.create = async (req, res, next) => {
       ...value,
       computedBonusEur
     });
-    return res.status(201).json({ data: created });
+    return res.status(201).json({ id: created._id, message: 'Order created', bonusEur: computedBonusEur });
   } catch (err) {
     if (err.code === 11000) return res.status(409).json({ error: 'Order already exists' });
     return next(err);

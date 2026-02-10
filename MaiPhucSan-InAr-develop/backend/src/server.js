@@ -9,6 +9,10 @@ const { connectMongo, disconnectMongo } = require('./db/mongoose');
 
 let server;
 
+app.get('/', (req, res) => {
+    res.redirect('/api/v1');
+});
+
 async function start() {
   await connectMongo();
 

@@ -1,0 +1,368 @@
+{
+  "info": {
+    "name": "Local API",
+    "_postman_id": "hp-collection-2026",
+    "description": "Matches Swagger endpoints: /salesmen/{employeeId}, /performance/social, /bonus/{employeeId}/compute. Includes HR+CEO logins and runner.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login HR (sets jwt + jwt_hr)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"hr\",\n  \"password\": \"Hr123!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "auth", "login"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "const token = r.token || r.accessToken || r.data?.token || r.data?.accessToken;",
+                  "pm.environment.set('jwt_hr', token);",
+                  "pm.environment.set('jwt', token);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login CEO (sets jwt_ceo)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"ceo\",\n  \"password\": \"Ceo123!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "auth", "login"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "const token = r.token || r.accessToken || r.data?.token || r.data?.accessToken;",
+                  "pm.environment.set('jwt_ceo', token);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Salesmen",
+      "item": [
+        {
+          "name": "List Salesmen",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{jwt}}", "type": "string" }] },
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/salesmen/consolidated",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "salesmen", "consolidated"]
+            }
+          }
+        },
+        {
+          "name": "Get Salesman by employeeId",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{jwt}}", "type": "string" }] },
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/salesmen/{{employeeId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "salesmen", "{{employeeId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Social Performance",
+      "item": [
+        {
+          "name": "Create Social Performance (HR)",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{jwt_hr}}", "type": "string" }] },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"employeeId\": \"{{employeeId}}\",\n  \"year\": 2026,\n  \"criteria\": [\n    {\"criterionId\": \"leadership\", \"target\": 5, \"actualSupervisor\": 4, \"actualPeerGroup\": 4},\n    {\"criterionId\": \"communication\", \"target\": 5, \"actualSupervisor\": 5, \"actualPeerGroup\": 5}\n  ],\n  \"remarks\": \"Roundtrip test record\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/performance/social",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "performance", "social"]
+            }
+          }
+        },
+        {
+          "name": "List Social Performance for salesman",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{jwt}}", "type": "string" }] },
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/performance/social/{{employeeId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "performance", "social", "{{employeeId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Bonus",
+      "item": [
+        {
+          "name": "Compute Bonus (CEO)",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{jwt_ceo}}", "type": "string" }] },
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/bonus/{{employeeId}}/compute",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "bonus", "{{employeeId}}", "compute"]
+            }
+          }
+        },
+        {
+          "name": "Get Bonus Computation",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{jwt}}", "type": "string" }] },
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/bonus/{{employeeId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "bonus", "{{employeeId}}"]
+            }
+          }
+        },
+        {
+          "name": "CEO Approve Bonus",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{jwt_ceo}}", "type": "string" }] },
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/bonus/{{employeeId}}/approve/ceo",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "bonus", "{{employeeId}}", "approve", "ceo"]
+            }
+          }
+        },
+        {
+          "name": "HR Approve & Store Bonus (may fail if OrangeHRM not configured)",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{jwt_hr}}", "type": "string" }] },
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/bonus/{{employeeId}}/approve/hr",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "bonus", "{{employeeId}}", "approve", "hr"]
+            }
+          }
+        },
+        {
+          "name": "Bonus History",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{jwt}}", "type": "string" }] },
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/bonus/{{employeeId}}/history",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "bonus", "{{employeeId}}", "history"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Roundtrip (Runner)",
+      "item": [
+        {
+          "name": "Set unique employeeId (pre-request)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "pm.environment.set('employeeId', 'E_RT_' + Date.now());"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}",
+              "host": ["{{baseUrl}}"]
+            }
+          }
+        },
+        {
+          "name": "Login HR (sets jwt + jwt_hr)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"hr\",\n  \"password\": \"Hr123!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "auth", "login"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "const token = r.token || r.accessToken || r.data?.token || r.data?.accessToken;",
+                  "pm.environment.set('jwt_hr', token);",
+                  "pm.environment.set('jwt', token);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login CEO (sets jwt_ceo)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"ceo\",\n  \"password\": \"Ceo123!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "auth", "login"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "const token = r.token || r.accessToken || r.data?.token || r.data?.accessToken;",
+                  "pm.environment.set('jwt_ceo', token);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Social Performance (HR)",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{jwt_hr}}", "type": "string" }] },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"employeeId\": \"{{employeeId}}\",\n  \"year\": 2026,\n  \"criteria\": [\n    {\"criterionId\": \"leadership\", \"target\": 5, \"actualSupervisor\": 4, \"actualPeerGroup\": 4},\n    {\"criterionId\": \"communication\", \"target\": 5, \"actualSupervisor\": 5, \"actualPeerGroup\": 5}\n  ],\n  \"remarks\": \"Runner social record\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/performance/social",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "performance", "social"]
+            }
+          }
+        },
+        {
+          "name": "Compute Bonus (CEO)",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{jwt_ceo}}", "type": "string" }] },
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/bonus/{{employeeId}}/compute",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "bonus", "{{employeeId}}", "compute"]
+            }
+          }
+        },
+        {
+          "name": "Get Bonus Computation",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{jwt_hr}}", "type": "string" }] },
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/bonus/{{employeeId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "bonus", "{{employeeId}}"]
+            }
+          }
+        },
+        {
+          "name": "CEO Approve Bonus",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{jwt_ceo}}", "type": "string" }] },
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/bonus/{{employeeId}}/approve/ceo",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "bonus", "{{employeeId}}", "approve", "ceo"]
+            }
+          }
+        },
+        {
+          "name": "HR Approve & Store Bonus (may fail if OrangeHRM not configured)",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{jwt_hr}}", "type": "string" }] },
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/bonus/{{employeeId}}/approve/hr",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "bonus", "{{employeeId}}", "approve", "hr"]
+            }
+          }
+        },
+        {
+          "name": "Bonus History",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{jwt_hr}}", "type": "string" }] },
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/bonus/{{employeeId}}/history",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "bonus", "{{employeeId}}", "history"]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000" },
+    { "key": "apiPrefix", "value": "/api/v1" }
+  ]
+}

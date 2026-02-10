@@ -9,12 +9,13 @@ const { SocialPerformanceRecord } = require('../models/social-performance.model'
 const { computeSocialRecordBonus, computeSocialTotal } = require('../services/bonus.service');
 
 const createSchema = Joi.object({
-  salesmanEmployeeId: Joi.string().min(1).max(50).required(),
+  // Salesman employee IDs follow the 'E' + digits format (e.g. E1001)
+  salesmanEmployeeId: Joi.string().pattern(/^E\d+$/).required(),
   year: Joi.number().integer().min(2000).max(2100).required(),
   criterionKey: Joi.string().min(1).max(100).required(),
   criterionName: Joi.string().min(1).max(200).required(),
   targetValue: Joi.number().min(0).required(),
-  actualValue: Joi.number().min(0).required(),
+  actualValue: Joi.number().min(0).optional(),
   weight: Joi.number().min(0).max(1).required(),
   supervisorRating: Joi.number().min(1).max(5).optional(),
   peerRating: Joi.number().min(1).max(5).optional(),
@@ -64,7 +65,7 @@ exports.create = async (req, res, next) => {
       createdBy: req.user.username
     });
 
-    return res.status(201).json({ data: created });
+    return res.status(201).json({ id: created._id, message: 'Record created', bonusEur: computedBonusEur });
   } catch (err) {
     if (err.code === 11000) {
       return res

@@ -1,19 +1,42 @@
 import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { FormBuilder, Validators } from '@angular/forms';
+import { FormBuilder, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import Chart from 'chart.js/auto';
+import { CommonModule, DecimalPipe } from '@angular/common';
+import { MatCardModule } from '@angular/material/card';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatButtonModule } from '@angular/material/button';
+import { MatSelectModule } from '@angular/material/select';
 
 import { ApiService } from '../../services/api.service';
 import { Salesman, SocialPerformanceRecord, OrderEvaluationRecord } from '../../models/api-models';
 
 @Component({
-  selector: 'app-hr-employees',
-  templateUrl: './hr-employees.component.html'
+    selector: 'app-hr-employees',
+    templateUrl: './hr-employees.component.html',
+    imports: [
+        CommonModule,
+        ReactiveFormsModule,
+        FormsModule,
+        DecimalPipe,
+        MatCardModule,
+        MatFormFieldModule,
+        MatInputModule,
+        MatButtonModule,
+        MatSelectModule
+    ]
 })
 export class HrEmployeesComponent implements OnInit, OnDestroy {
   salesmen: Salesman[] = [];
   selectedEmployeeId = 'E1001';
   year = new Date().getFullYear();
+  
+  // Loading states
+  isLoadingSalesmen = false;
+  isLoadingSocial = false;
+  isLoadingOrders = false;
+  isLoadingOdoo = false;
 
   socialRecords: SocialPerformanceRecord[] = [];
   socialTotalEur = 0;
@@ -95,9 +118,16 @@ export class HrEmployeesComponent implements OnInit, OnDestroy {
   // Salesmen
   // ------------------------
   loadSalesmen(): void {
+    this.isLoadingSalesmen = true;
     const sub = this.api.listSalesmen().subscribe({
-      next: (res) => (this.salesmen = res.data),
-      error: (err) => (this.error = err?.error?.error || 'Failed to load salesmen')
+      next: (res) => {
+        this.salesmen = res.data;
+        this.isLoadingSalesmen = false;
+      },
+      error: (err) => {
+        this.error = err?.error?.error || 'Failed to load salesmen';
+        this.isLoadingSalesmen = false;
+      }
     });
     this.subs.push(sub);
   }
@@ -128,12 +158,17 @@ export class HrEmployeesComponent implements OnInit, OnDestroy {
   // ------------------------
   loadSocial(): void {
     this.error = null;
+    this.isLoadingSocial = true;
     const sub = this.api.listSocial(this.selectedEmployeeId, this.year).subscribe({
       next: (res) => {
         this.socialRecords = res.data.records;
         this.socialTotalEur = res.data.socialTotalEur;
+        this.isLoadingSocial = false;
       },
-      error: (err) => (this.error = err?.error?.error || 'Load social records failed')
+      error: (err) => {
+        this.error = err?.error?.error || 'Load social records failed';
+        this.isLoadingSocial = false;
+      }
     });
     this.subs.push(sub);
   }
@@ -189,12 +224,17 @@ export class HrEmployeesComponent implements OnInit, OnDestroy {
   // ------------------------
   loadOrders(refresh: boolean): void {
     this.error = null;
+    this.isLoadingOrders = true;
     const sub = this.api.listOrders(this.selectedEmployeeId, this.year, refresh).subscribe({
       next: (res) => {
         this.orders = res.data.records;
         this.ordersTotalEur = res.data.ordersTotalEur;
+        this.isLoadingOrders = false;
       },
-      error: (err) => (this.error = err?.error?.error || 'Load orders failed')
+      error: (err) => {
+        this.error = err?.error?.error || 'Load orders failed';
+        this.isLoadingOrders = false;
+      }
     });
     this.subs.push(sub);
   }
@@ -259,9 +299,16 @@ export class HrEmployeesComponent implements OnInit, OnDestroy {
   // ------------------------
   loadOdooEmployees(): void {
     this.error = null;
+    this.isLoadingOdoo = true;
     const sub = this.api.getOdooEmployees(20).subscribe({
-      next: (res) => (this.odooEmployees = res.data),
-      error: (err) => (this.error = err?.error?.error || 'Fetch Odoo employees failed')
+      next: (res) => {
+        this.odooEmployees = res.data;
+        this.isLoadingOdoo = false;
+      },
+      error: (err) => {
+        this.error = err?.error?.error || 'Fetch Odoo employees failed';
+        this.isLoadingOdoo = false;
+      }
     });
     this.subs.push(sub);
   }

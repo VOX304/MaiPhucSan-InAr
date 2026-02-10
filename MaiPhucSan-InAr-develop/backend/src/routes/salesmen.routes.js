@@ -2,8 +2,10 @@ const router = require('express').Router();
 const ctrl = require('../controllers/salesmen.controller');
 const { authRequired } = require('../middleware/auth.middleware');
 const { requireRole, allowSelfOrRoles } = require('../middleware/roles.middleware');
+const { validateEmployeeId } = require('../middleware/params.middleware');
 
 router.use(authRequired);
+router.param('employeeId', validateEmployeeId);
 
 // List / create
 router.get('/salesmen', requireRole('CEO', 'HR'), ctrl.list);

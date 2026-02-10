@@ -5,6 +5,7 @@ import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 import {
   ApiResponse,
+  ApiActionResponse,
   Salesman,
   SocialPerformanceRecord,
   SocialRecordsResponse,
@@ -74,8 +75,8 @@ export class ApiService {
     );
   }
 
-  createSocial(record: SocialPerformanceRecord): Observable<ApiResponse<SocialPerformanceRecord>> {
-    return this.http.post<ApiResponse<SocialPerformanceRecord>>(`${this.baseUrl}/performance/social`, record);
+  createSocial(record: SocialPerformanceRecord): Observable<ApiActionResponse> {
+    return this.http.post<ApiActionResponse>(`${this.baseUrl}/performance/social`, record);
   }
 
   patchSocial(recordId: string, patch: Partial<SocialPerformanceRecord>): Observable<ApiResponse<SocialPerformanceRecord>> {
@@ -97,8 +98,8 @@ export class ApiService {
     });
   }
 
-  createOrder(record: OrderEvaluationRecord): Observable<ApiResponse<OrderEvaluationRecord>> {
-    return this.http.post<ApiResponse<OrderEvaluationRecord>>(`${this.baseUrl}/orders`, record);
+  createOrder(record: OrderEvaluationRecord): Observable<ApiActionResponse> {
+    return this.http.post<ApiActionResponse>(`${this.baseUrl}/orders`, record);
   }
 
   // ----------------
@@ -138,40 +139,40 @@ export class ApiService {
     );
   }
 
-  approveCeo(employeeId: string, year?: number): Observable<ApiResponse<BonusComputation>> {
+  approveCeo(employeeId: string, year?: number): Observable<ApiActionResponse> {
     let params = new HttpParams();
     if (year) params = params.set('year', String(year));
-    return this.http.post<ApiResponse<BonusComputation>>(
+    return this.http.post<ApiActionResponse>(
       `${this.baseUrl}/bonus/${encodeURIComponent(employeeId)}/approve/ceo`,
       {},
       { params }
     );
   }
 
-  approveHr(employeeId: string, year?: number): Observable<ApiResponse<BonusComputation>> {
+  approveHr(employeeId: string, year?: number): Observable<ApiActionResponse> {
     let params = new HttpParams();
     if (year) params = params.set('year', String(year));
-    return this.http.post<ApiResponse<BonusComputation>>(
+    return this.http.post<ApiActionResponse>(
       `${this.baseUrl}/bonus/${encodeURIComponent(employeeId)}/approve/hr`,
       {},
       { params }
     );
   }
 
-  releaseToSalesman(employeeId: string, year?: number): Observable<ApiResponse<BonusComputation>> {
+  releaseToSalesman(employeeId: string, year?: number): Observable<ApiActionResponse> {
     let params = new HttpParams();
     if (year) params = params.set('year', String(year));
-    return this.http.post<ApiResponse<BonusComputation>>(
+    return this.http.post<ApiActionResponse>(
       `${this.baseUrl}/bonus/${encodeURIComponent(employeeId)}/release`,
       {},
       { params }
     );
   }
 
-  confirmBonus(employeeId: string, year?: number): Observable<ApiResponse<BonusComputation>> {
+  confirmBonus(employeeId: string, year?: number): Observable<ApiActionResponse> {
     let params = new HttpParams();
     if (year) params = params.set('year', String(year));
-    return this.http.post<ApiResponse<BonusComputation>>(
+    return this.http.post<ApiActionResponse>(
       `${this.baseUrl}/bonus/${encodeURIComponent(employeeId)}/confirm`,
       {},
       { params }
@@ -193,8 +194,8 @@ export class ApiService {
   createQualification(
     employeeId: string,
     payload: { year: number; title: string; description?: string; storeInOrangeHrm?: boolean }
-  ): Observable<ApiResponse<Qualification>> {
-    return this.http.post<ApiResponse<Qualification>>(
+  ): Observable<ApiActionResponse> {
+    return this.http.post<ApiActionResponse>(
       `${this.baseUrl}/qualifications/${encodeURIComponent(employeeId)}`,
       payload
     );

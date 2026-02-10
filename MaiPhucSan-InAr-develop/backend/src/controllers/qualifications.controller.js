@@ -57,13 +57,13 @@ exports.create = async (req, res, next) => {
         }).exec();
       } catch (_err) {
         return res.status(201).json({
-          data: created,
-          warning: 'Qualification stored locally, but could not be stored in OrangeHRM.'
+          id: created._id,
+          message: 'Qualification created locally, but could not be stored in OrangeHRM.'
         });
       }
     }
 
-    return res.status(201).json({ data: created });
+    return res.status(201).json({ id: created._id, message: 'Qualification created' });
   } catch (err) {
     if (err.code === 11000) return res.status(409).json({ error: 'Qualification already exists' });
     return next(err);

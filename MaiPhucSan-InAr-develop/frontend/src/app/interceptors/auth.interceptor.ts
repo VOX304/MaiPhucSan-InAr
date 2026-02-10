@@ -3,15 +3,18 @@ import {
   HttpInterceptor,
   HttpRequest,
   HttpHandler,
-  HttpEvent
+  HttpEvent,
+  HttpErrorResponse
 } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, throwError } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { AuthService } from '../services/auth.service';
+import { NotificationService } from '../services/notification.service';
 import { environment } from '../../environments/environment';
 
 @Injectable()
 export class AuthInterceptor implements HttpInterceptor {
-  constructor(private auth: AuthService) {}
+  constructor(private auth: AuthService, private notifications: NotificationService) {}
 
   intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
     const token = this.auth.token;
@@ -23,9 +26,33 @@ export class AuthInterceptor implements HttpInterceptor {
           Authorization: `Bearer ${token}`
         }
       });
-      return next.handle(authReq);
+      return next.handle(authReq).pipe(catchError((err) => this.handleError(err)));
     }
 
-    return next.handle(req);
+    return next.handle(req).pipe(catchError((err) => this.handleError(err)));
+  }
+
+  private handleError(error: HttpErrorResponse): Observable<never> {
+    // Extract error message from various sources
+    let errorMessage = 'An unexpected error occurred';
+
+    if (error.error?.error) {
+      errorMessage = error.error.error;
+    } else if (error.error?.message) {
+      errorMessage = error.error.message;
+    } else if (error.message) {
+      errorMessage = error.message;
+    }
+
+    // Show error notification
+    this.notifications.error(errorMessage);
+
+    // If unauthorized, logout
+    if (error.status === 401) {
+      this.auth.logout();
+    }
+
+    return throwError(() => error);
   }
 }
+

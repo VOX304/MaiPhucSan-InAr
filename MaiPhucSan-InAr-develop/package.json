@@ -1,23 +1,19 @@
 {
-  "name": "inar-monorepo",
+  "name": "inar-project",
   "version": "1.0.0",
   "private": true,
-  "workspaces": [
-    "backend",
-    "frontend"
-  ],
+  "description": "Integration Architecture project - Multi-service integration platform",
   "scripts": {
-    "backend:dev": "npm --workspace backend run dev",
-    "backend:start": "npm --workspace backend run start",
-    "backend:test": "npm --workspace backend run test",
-    "backend:lint": "npm --workspace backend run lint",
-    "frontend:start": "npm --workspace frontend run start",
-    "frontend:build": "npm --workspace frontend run build",
-    "frontend:lint": "npm --workspace frontend run lint",
-    "lint": "npm run backend:lint && npm run frontend:lint",
-    "test": "npm run backend:test",
-    "backend:seed": "npm --workspace backend run seed",
+    "backend:dev": "cd backend && npm run dev",
+    "backend:start": "cd backend && npm run start",
+    "backend:test": "cd backend && npm run test",
+    "backend:lint": "cd backend && npm run lint",
+    "backend:seed": "cd backend && npm run seed",
+    "frontend:start": "cd frontend && npm run start",
+    "frontend:build": "cd frontend && npm run build",
+    "frontend:lint": "cd frontend && npm run lint",
     "docker:up": "docker compose up -d",
-    "docker:down": "docker compose down"
+    "docker:down": "docker compose down",
+    "install:all": "cd backend && npm install && cd ../frontend && npm install"
   }
 }
