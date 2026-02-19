@@ -1,9 +1,5 @@
 # Work Done (Assignment 5.2-3)
 
-This document explains the concrete changes made to transform the original ZIP
-into a single, clean project that matches the **UI Integration & Integration
-Testing** tasks.
-
 ## 1. Repository Clean-up
 
 The original ZIP contained multiple unrelated assignment folders, IDE metadata,

@@ -1,0 +1,1290 @@
+\documentclass[11pt,a4paper,oneside,openany]{book}
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage[margin=1in]{geometry}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\usepackage{xcolor}
+\usepackage{fancyhdr}
+\usepackage{listings}
+\usepackage{hyperref}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{float}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{longtable}
+\usepackage{multirow}
+\usepackage{setspace}
+\usepackage{tcolorbox}
+\usepackage{mdframed}
+\usepackage{soul}
+
+% TikZ libraries
+\usetikzlibrary{shapes,arrows,positioning,fit,calc,shadows,patterns,decorations.pathreplacing}
+
+% Color scheme
+\definecolor{darkblue}{RGB}{26,84,144}
+\definecolor{lightblue}{RGB}{45,122,184}
+\definecolor{accent}{RGB}{74,144,200}
+\definecolor{background}{RGB}{240,245,250}
+\definecolor{codebackground}{RGB}{245,245,245}
+
+% Header and footer
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[R]{\textcolor{darkblue}{\slshape HighPerformance}}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.5pt}
+\renewcommand{\headrule}{\color{darkblue}\hrule}
+\renewcommand{\footrulewidth}{0.5pt}
+
+% Code listing setup
+\lstset{
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    showstringspaces=false,
+    tabsize=2,
+    language=JavaScript,
+    backgroundcolor=\color{codebackground},
+    keywordstyle=\color{darkblue}\bfseries,
+    commentstyle=\color{gray}\itshape,
+    stringstyle=\color{accent},
+    breakatwhitespace=true,
+    frame=single,
+    frameround=tttt,
+    rulecolor=\color{lightblue},
+    captionpos=b,
+    float=h!,
+    aboveskip=10pt,
+    belowskip=10pt
+}
+
+% Section formatting
+\usepackage{titlesec}
+\titleformat{\chapter}[block]{\Large\bfseries\color{darkblue}}{Chapter \thechapter}{1em}{}[\vspace{0.5pt}\color{darkblue}\rule{\textwidth}{1.5pt}]
+\titleformat{\section}{\large\bfseries\color{lightblue}}{\thesection}{1em}{}
+\titleformat{\subsection}{\bfseries\color{accent}}{\thesubsection}{1em}{}
+
+% Custom commands
+\newcommand{\todo}[1]{\textcolor{red}{TODO: #1}}
+\newcommand{\note}[1]{\begin{tcolorbox}[colback=blue!5!white,colframe=darkblue,title=Note]\small #1\end{tcolorbox}}
+\newcommand{\warning}[1]{\begin{tcolorbox}[colback=orange!5!white,colframe=orange,title=Warning]\small #1\end{tcolorbox}}
+\newcommand{\code}[1]{\texttt{\small #1}}
+\newcommand{\endpoint}[1]{\fcolorbox{lightblue}{background}{\texttt{#1}}}
+
+% Title page
+\title{\Huge\textbf{\color{darkblue}HighPerformance}\\[0.5cm]
+        \Large Performance Management \& Bonus Calculation System\\[2cm]
+        \includegraphics[width=0.3\textwidth]{example-image-a}\\[2cm]
+        \normalsize Project Documentation\\
+        \textit{Version 1.0 --- February 2026}}
+\author{\textbf{Development Team}\\Integration Architecture Project\\[1cm]\textcolor{darkblue}{\Large Enterprise-Grade System}}
+\date{\today}
+
+\begin{document}
+
+% Title page
+\maketitle
+
+% Abstract
+\chapter*{Abstract}
+\addcontentsline{toc}{chapter}{Abstract}
+
+HighPerformance is a comprehensive enterprise-grade system designed for sales organizations to automate bonus calculations, manage performance metrics, and provide real-time dashboards with multi-level approval workflows. This document provides complete technical documentation including architecture, API reference, database schemas, integration guides, and deployment procedures.
+
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+\textbf{Property} & \textbf{Value} \\
+\midrule
+Project Type & Web Application \\
+Technology Stack & Node.js, Angular, MongoDB, Camunda \\
+Status & Active Development \\
+Last Updated & February 11, 2026 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% Table of contents
+\tableofcontents
+\newpage
+
+% ===== CHAPTER 1: EXECUTIVE SUMMARY =====
+\chapter{Executive Summary}
+
+\section{Project Overview}
+
+HighPerformance addresses enterprise requirements for performance management and bonus automation. The system provides:
+
+\begin{itemize}
+    \item \textbf{Automated Bonus Calculation} --- Multi-component computations based on performance metrics
+    \item \textbf{Multi-Level Approval Workflow} --- CEO and HR approval with process orchestration
+    \item \textbf{Real-Time Dashboards} --- Role-based analytics and visualization
+    \item \textbf{Enterprise Integration} --- Connectors for OrangeHRM, OpenCRX, Odoo
+    \item \textbf{Security-First Design} --- JWT authentication, RBAC, encrypted communications
+    \item \textbf{Audit & Compliance} --- Complete logging and historical tracking
+\end{itemize}
+
+\section{Technology Stack}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{lll}
+\toprule
+\textbf{Layer} & \textbf{Technology} & \textbf{Version} \\
+\midrule
+Frontend & Angular & 16+ \\
+Backend & Express.js (Node.js) & 4.x \\
+Database & MongoDB & 6.x+ \\
+Workflow Engine & Camunda BPM & Latest \\
+Authentication & JWT & jsonwebtoken 9.0+ \\
+API Documentation & OpenAPI & 3.0 \\
+Containerization & Docker & Latest \\
+\bottomrule
+\end{tabular}
+\caption{Technology Stack Components}
+\label{tab:techstack}
+\end{table}
+
+\section{Key Stakeholders}
+
+\begin{tcolorbox}[colback=background,colframe=darkblue,title=Supported Roles]
+\begin{description}
+    \item[CEO] Compute bonuses, approve CEO-level, access executive dashboards
+    \item[HR] Manage salesmen, create performance records, approve HR-level
+    \item[Salesman] View personal bonuses (when released), submit qualifications
+    \item[Admin] System configuration, user management, integrations
+\end{description}
+\end{tcolorbox}
+
+% ===== CHAPTER 2: ARCHITECTURE =====
+\chapter{System Architecture}
+
+\section{High-Level Architecture}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[scale=0.7, node distance=3.5cm]
+    % Define styles
+    \tikzstyle{client}=[rectangle,rounded corners,draw=darkblue,fill=background,thick,minimum width=2.2cm,minimum height=1.1cm,text width=2cm,align=center,font=\small]
+    \tikzstyle{frontend}=[rectangle,rounded corners,draw=lightblue,fill=background,thick,minimum width=2.7cm,minimum height=1.3cm,text width=2.5cm,align=center,font=\small]
+    \tikzstyle{backend}=[rectangle,rounded corners,draw=accent,fill=background,thick,minimum width=2.7cm,minimum height=1.3cm,text width=2.5cm,align=center,font=\small]
+    \tikzstyle{db}=[cylinder,draw=darkblue,fill=background,thick,minimum width=1.6cm,minimum height=1.1cm,text width=1.4cm,align=center,font=\small]
+    \tikzstyle{external}=[rectangle,rounded corners,draw=orange,fill=background,thick,minimum width=2.2cm,minimum height=1.1cm,text width=2cm,align=center,font=\small]
+    \tikzstyle{arrow}=[->,>=stealth,line width=1.5pt]
+    
+    % Layers
+    \node[client] (browser) {Web Browser\\ \small(HTTPS)};
+    
+    \node[frontend,below=2.5cm of browser] (frontend) {Angular\\ Frontend\\ :4200};
+    
+    \node[backend,below=2.5cm of frontend] (backend) {Express\\ Backend\\ :3000};
+    
+    \node[db,below left=2.5cm and 2.5cm of backend] (mongodb) {MongoDB\\ :27017};
+    \node[db,below right=2.5cm and 2.5cm of backend] (camunda) {Camunda\\ :8080};
+    
+    \node[external,below left=2.5cm and 5cm of backend] (orangehrm) {OrangeHRM};
+    \node[external,below=4cm of backend] (opencrx) {OpenCRX};
+    \node[external,below right=2.5cm and 5cm of backend] (odoo) {Odoo};
+    
+    % Draw arrows
+    \draw[arrow] (browser) -- node[right,text=darkblue] {JWT Token} (frontend);
+    \draw[arrow] (frontend) -- node[right,text=lightblue] {REST API} (backend);
+    \draw[arrow] (backend) -- (mongodb);
+    \draw[arrow] (backend) -- (camunda);
+    \draw[arrow] (backend) -- (orangehrm);
+    \draw[arrow] (backend) -- (opencrx);
+    \draw[arrow] (backend) -- (odoo);
+    
+\end{tikzpicture}
+\caption{System Architecture Overview}
+\label{fig:architecture}
+\end{figure}
+
+\section{Component Architecture}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[node distance=0.5cm and 0.7cm]
+    
+    % Controllers layer - draw box first as background
+    \draw[rectangle,rounded corners,draw=darkblue,thick,fill=background] 
+        (0,0) rectangle (9,2);
+    \node[font=\small\bfseries,color=darkblue] at (4.5,1.7) {Controllers};
+    
+    % Components below the label
+    \node[rectangle,rounded corners,draw=lightblue,fill=white,thick,minimum width=1.9cm,minimum height=0.7cm,font=\footnotesize] 
+        at (1.2,0.8) {Auth};
+    \node[rectangle,rounded corners,draw=lightblue,fill=white,thick,minimum width=1.9cm,minimum height=0.7cm,font=\footnotesize] 
+        at (3.4,0.8) {Salesmen};
+    \node[rectangle,rounded corners,draw=lightblue,fill=white,thick,minimum width=1.9cm,minimum height=0.7cm,font=\footnotesize] 
+        at (5.6,0.8) {Bonus};
+    \node[rectangle,rounded corners,draw=lightblue,fill=white,thick,minimum width=1.9cm,minimum height=0.7cm,font=\footnotesize] 
+        at (7.8,0.8) {Performance};
+    
+    % Arrow from Controllers to Middleware
+    \draw[->,thick] (4.5,0) -- (4.5,-0.3);
+    
+    % Middleware layer
+    \draw[rectangle,rounded corners,draw=darkblue,thick,fill=background] 
+        (0,-2.3) rectangle (9,-0.3);
+    \node[font=\small\bfseries,color=darkblue] at (4.5,-0.6) {Middleware};
+    
+    \node[rectangle,rounded corners,draw=lightblue,fill=white,thick,minimum width=1.9cm,minimum height=0.7cm,font=\footnotesize] 
+        at (2.3,-1.4) {JWT Auth};
+    \node[rectangle,rounded corners,draw=lightblue,fill=white,thick,minimum width=1.9cm,minimum height=0.7cm,font=\footnotesize] 
+        at (4.5,-1.4) {RBAC};
+    \node[rectangle,rounded corners,draw=lightblue,fill=white,thick,minimum width=1.9cm,minimum height=0.7cm,font=\footnotesize] 
+        at (6.7,-1.4) {Logging};
+    
+    % Arrow from Middleware to Services
+    \draw[->,thick] (4.5,-2.3) -- (4.5,-2.6);
+    
+    % Services layer
+    \draw[rectangle,rounded corners,draw=darkblue,thick,fill=background] 
+        (0,-4.6) rectangle (9,-2.6);
+    \node[font=\small\bfseries,color=darkblue] at (4.5,-2.9) {Services};
+    
+    \node[rectangle,rounded corners,draw=lightblue,fill=white,thick,minimum width=1.9cm,minimum height=0.7cm,font=\footnotesize] 
+        at (1.2,-3.7) {Auth Svc};
+    \node[rectangle,rounded corners,draw=lightblue,fill=white,thick,minimum width=1.9cm,minimum height=0.7cm,font=\footnotesize] 
+        at (3.4,-3.7) {Bonus Svc};
+    \node[rectangle,rounded corners,draw=lightblue,fill=white,thick,minimum width=1.9cm,minimum height=0.7cm,font=\footnotesize] 
+        at (5.6,-3.7) {Cache Svc};
+    \node[rectangle,rounded corners,draw=lightblue,fill=white,thick,minimum width=1.9cm,minimum height=0.7cm,font=\footnotesize] 
+        at (7.8,-3.7) {Health Svc};
+    
+    % Arrow from Services to Integrations
+    \draw[->,thick] (4.5,-4.6) -- (4.5,-4.9);
+    
+    % Integrations layer
+    \draw[rectangle,rounded corners,draw=darkblue,thick,fill=background] 
+        (0,-6.9) rectangle (9,-4.9);
+    \node[font=\small\bfseries,color=darkblue] at (4.5,-5.2) {Integrations};
+    
+    \node[rectangle,rounded corners,draw=lightblue,fill=white,thick,minimum width=1.9cm,minimum height=0.7cm,font=\footnotesize] 
+        at (1.2,-6) {OrangeHRM};
+    \node[rectangle,rounded corners,draw=lightblue,fill=white,thick,minimum width=1.9cm,minimum height=0.7cm,font=\footnotesize] 
+        at (3.4,-6) {OpenCRX};
+    \node[rectangle,rounded corners,draw=lightblue,fill=white,thick,minimum width=1.9cm,minimum height=0.7cm,font=\footnotesize] 
+        at (5.6,-6) {Odoo};
+    \node[rectangle,rounded corners,draw=lightblue,fill=white,thick,minimum width=1.9cm,minimum height=0.7cm,font=\footnotesize] 
+        at (7.8,-6) {Camunda};
+    
+\end{tikzpicture}
+\caption{Express Backend Layer Architecture}
+\label{fig:backend_layers}
+\end{figure}
+
+\section{Data Flow Diagram}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[node distance=3cm and 2cm]
+    \tikzstyle{process}=[rectangle,rounded corners,draw=darkblue,fill=background,thick,minimum width=2.8cm,minimum height=1.2cm,text width=2.5cm,align=center,font=\small]
+    \tikzstyle{data}=[ellipse,draw=lightblue,fill=background,thick,minimum width=2.5cm,minimum height=1.2cm,text width=2.2cm,align=center,font=\small]
+    \tikzstyle{decision}=[diamond,draw=accent,fill=background,thick,minimum width=2cm,minimum height=2cm,text width=1.5cm,align=center,font=\small]
+    \tikzstyle{arrow}=[->,>=stealth,line width=1.5pt]
+    
+    % User login flow
+    \node[process] (login) {Login};
+    \node[data,right=of login] (user_db) {User DB};
+    \draw[arrow] (login) -- (user_db);
+    
+    % Bonus computation flow
+    \node[process,below=of login] (compute) {Compute Bonus};
+    \node[data,right=of compute] (perf_data) {Performance Data};
+    \node[data,below=of perf_data] (order_data) {Order Data};
+    \draw[arrow] (compute) -- (perf_data);
+    \draw[arrow] (compute) -- (order_data);
+    
+    % Approval flow
+    \node[decision,below=of compute] (approve) {Approve?};
+    \node[process,below left=2cm and 1cm of approve] (ceo_approve) {CEO Approval};
+    \node[process,below right=2cm and 1cm of approve] (hr_approve) {HR Approval};
+    \draw[arrow] (compute) -- (approve);
+    \draw[arrow] (approve) -- (ceo_approve);
+    \draw[arrow] (approve) -- (hr_approve);
+    
+    % Storage
+    \node[data,below=3cm of approve] (bonus_db) {Store Bonus};
+    \draw[arrow] (ceo_approve) -- (bonus_db);
+    \draw[arrow] (hr_approve) -- (bonus_db);
+    
+\end{tikzpicture}
+\caption{Bonus Computation Data Flow}
+\label{fig:dataflow}
+\end{figure}
+
+% ===== CHAPTER 3: PROJECT STRUCTURE =====
+\chapter{Project Structure}
+
+\section{Directory Hierarchy}
+
+\begin{lstlisting}[language=bash,caption=Project Directory Layout,basicstyle=\ttfamily\footnotesize]
+MaiPhucSan-InAr-develop/
+  backend/                    # Node.js Express API
+    src/
+      controllers/            # HTTP request handlers
+      middleware/             # Express middleware
+      models/                 # Mongoose schemas
+      routes/                 # API routes
+      services/               # Business logic
+      db/                     # Database config
+      config/                 # Configuration
+      app.js
+    test/                     # Test files
+    package.json
+  frontend/                   # Angular application
+    src/
+      app/                    # Components & services
+      environments/           # Config files
+      main.ts
+    angular.json
+  docs/                       # Documentation
+  workflow/                   # BPMN processes
+  docker-compose.yml          # Infrastructure
+\end{lstlisting}
+
+% ===== CHAPTER 4: DATABASE MODELS =====
+\chapter{Database Models}
+
+\section{Data Model Overview}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[node distance=3.5cm and 3cm]
+    \tikzstyle{entity}=[rectangle,draw=darkblue,fill=background,thick,minimum width=3.2cm,minimum height=2.8cm,text width=3cm,align=left,font=\small]
+    \tikzstyle{relation}=[-,line width=1.5pt,color=accent]
+    
+    \node[entity] (user) {
+        \textbf{\small User}\\[0.2cm]
+        \rule{\linewidth}{0.5pt}\\[0.15cm]
+        \fontsize{8}{9}\selectfont
+        \_id: OID\\[0.05cm]
+        username: Str\\[0.05cm]
+        role: Enum\\[0.05cm]
+        email: Str\\[0.05cm]
+        hash: Str
+    };
+    
+    \node[entity,right=of user] (salesman) {
+        \textbf{\small Salesman}\\[0.2cm]
+        \rule{\linewidth}{0.5pt}\\[0.15cm]
+        \fontsize{8}{9}\selectfont
+        \_id: OID\\[0.05cm]
+        empId: Str\\[0.05cm]
+        firstName: Str\\[0.05cm]
+        lastName: Str\\[0.05cm]
+        email: Str\\[0.05cm]
+        manager: OID
+    };
+    
+    \node[entity,below=of salesman] (performance) {
+        \textbf{\small SocialPerf}\\[0.2cm]
+        \rule{\linewidth}{0.5pt}\\[0.15cm]
+        \fontsize{8}{9}\selectfont
+        \_id: OID\\[0.05cm]
+        empId: Str\\[0.05cm]
+        month: Str\\[0.05cm]
+        target: Num\\[0.05cm]
+        actual: Num\\[0.05cm]
+        bonus: Num
+    };
+    
+    \node[entity,below=of user] (bonus) {
+        \textbf{\small BonusComp}\\[0.2cm]
+        \rule{\linewidth}{0.5pt}\\[0.15cm]
+        \fontsize{8}{9}\selectfont
+        \_id: OID\\[0.05cm]
+        empId: Str\\[0.05cm]
+        year: Num\\[0.05cm]
+        totalBonus: Num\\[0.05cm]
+        status: Enum\\[0.05cm]
+        approvals: Obj
+    };
+    
+    \node[entity,left=of bonus] (order) {
+        \textbf{\small OrderEval}\\[0.2cm]
+        \rule{\linewidth}{0.5pt}\\[0.15cm]
+        \fontsize{8}{9}\selectfont
+        \_id: OID\\[0.05cm]
+        empId: Str\\[0.05cm]
+        orderId: Str\\[0.05cm]
+        revenueEur: Num\\[0.05cm]
+        bonus: Num
+    };
+    
+    % Relationships
+    \draw[relation] (user) -- (salesman);
+    \draw[relation] (salesman) -- (performance);
+    \draw[relation] (salesman) -- (bonus);
+    \draw[relation] (salesman) -- (order);
+    
+\end{tikzpicture}
+\caption{Entity Relationship Diagram}
+\label{fig:erd}
+\end{figure}
+
+\section{User Model}
+
+\noindent\begin{minipage}{\linewidth}
+\begin{lstlisting}[caption=User Schema Definition]
+{
+  _id: ObjectId,
+  username: String (unique),
+  email: String,
+  passwordHash: String,
+  role: Enum ["CEO", "HR", "SALESMAN", "ADMIN"],
+  employeeId: String,
+  firstName: String,
+  lastName: String,
+  isActive: Boolean,
+  createdAt: Date,
+  updatedAt: Date
+}
+\end{lstlisting}
+\end{minipage}
+
+\section{Bonus Computation Model}
+
+\begin{lstlisting}[caption=BonusComputation Schema]
+{
+  _id: ObjectId,
+  employeeId: String,
+  year: Number,
+  socialBonus: Number,
+  orderBonus: Number,
+  totalBonus: Number,
+  status: Enum ["PENDING_CEO", "PENDING_HR", "RELEASED"],
+  approvedByCEO: { date: Date, remarks: String },
+  approvedByHR: { date: Date, remarks: String },
+  storedInOrangeHRM: Boolean,
+  workflowInstanceId: String (Camunda),
+  createdAt: Date,
+  updatedAt: Date
+}
+\end{lstlisting}
+
+% ===== CHAPTER 5: API REFERENCE =====
+\chapter{API Reference}
+
+\section{Authentication}
+
+\subsection{Login Endpoint}
+
+\endpoint{POST /api/v1/auth/login}
+
+\begin{lstlisting}[caption=Login Request/Response]
+# Request
+POST /api/v1/auth/login
+Content-Type: application/json
+
+{
+  "username": "ceo",
+  "password": "Ceo123!"
+}
+
+# Response (200)
+{
+  "token": "eyJhbGciOiJIUzI1NiIs...",
+  "user": {
+    "id": "user_123",
+    "username": "ceo",
+    "role": "CEO",
+    "employeeId": "E001"
+  }
+}
+\end{lstlisting}
+
+\section{Salesmen Management}
+
+\subsection{List Salesmen}
+
+\endpoint{GET /api/v1/salesmen}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{lll}
+\toprule
+\textbf{Parameter} & \textbf{Type} & \textbf{Description} \\
+\midrule
+Authorization & Header & Bearer token (required) \\
+page & Query & Page number (default: 1) \\
+limit & Query & Results per page (default: 20) \\
+\bottomrule
+\end{tabular}
+\caption{Salesmen List Parameters}
+\end{table}
+
+\subsection{Create Salesman}
+
+\endpoint{POST /api/v1/salesmen}
+
+\begin{lstlisting}[caption=Create Salesman Request]
+POST /api/v1/salesmen
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "firstName": "John",
+  "lastName": "Doe",
+  "employeeId": "E1001",
+  "email": "john@company.com",
+  "department": "Sales"
+}
+\end{lstlisting}
+
+\section{Bonus Computation}
+
+\subsection{Compute Bonus}
+
+\endpoint{POST /api/v1/bonus/:employeeId/compute}
+
+This endpoint calculates the bonus based on performance records and orders.
+
+\begin{lstlisting}[caption=Bonus Computation Request]
+POST /api/v1/bonus/E1001/compute
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "year": 2025,
+  "reason": "Q1 Final Calculation"
+}
+
+# Response (200)
+{
+  "employeeId": "E1001",
+  "year": 2025,
+  "socialBonus": 18000,
+  "orderBonus": 5000,
+  "totalBonus": 23000,
+  "status": "PENDING_CEO"
+}
+\end{lstlisting}
+
+\subsection{Approval Endpoints}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{ll}
+\toprule
+\textbf{Endpoint} & \textbf{Purpose} \\
+\midrule
+\code{POST /api/v1/bonus/:employeeId/approve/ceo} & CEO approval \\
+\code{POST /api/v1/bonus/:employeeId/approve/hr} & HR approval \& storage \\
+\code{GET /api/v1/bonus/:employeeId} & Get bonus details \\
+\code{GET /api/v1/bonus/:employeeId/history} & View history \\
+\bottomrule
+\end{tabular}
+\caption{Bonus API Endpoints}
+\end{table}
+
+% ===== CHAPTER 6: WORKFLOW & INTEGRATION =====
+\chapter{Workflow Orchestration}
+
+\section{Bonus Approval Workflow}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[node distance=1.8cm and 1.5cm]
+    \tikzstyle{state}=[rectangle,rounded corners,draw=darkblue,fill=background,thick,minimum width=2.5cm,minimum height=1cm,text width=2.3cm,align=center,font=\footnotesize]
+    \tikzstyle{decision}=[diamond,draw=accent,fill=background,thick,minimum width=1.8cm,minimum height=1.8cm,text width=1.5cm,align=center,font=\footnotesize]
+    \tikzstyle{arrow}=[->,>=stealth,line width=1.2pt,color=darkblue]
+    
+    \node[state] (init) {Initialize};
+    \node[state,above=of init] (ceo) {CEO Review};
+    \node[decision,above=of ceo] (ceo_dec) {Approved?};
+    \node[state,right=2.5cm of ceo_dec] (hr) {HR Review};
+    \node[decision,above=of hr] (hr_dec) {Approved?};
+    \node[state,above=of hr_dec] (store) {Store in OrangeHRM};
+    \node[state,above=of store] (release) {Release to Salesman};
+    \node[state,left=2.5cm of ceo_dec] (reject) {Rejected};
+    
+    \draw[arrow] (init) -- (ceo);
+    \draw[arrow] (ceo) -- (ceo_dec);
+    \draw[arrow] (ceo_dec) -- node[above,font=\tiny] {✓ Yes} (hr);
+    \draw[arrow] (ceo_dec) -- node[above,font=\tiny] {✗ No} (reject);
+    \draw[arrow] (hr) -- (hr_dec);
+    \draw[arrow] (hr_dec) -- node[right,font=\tiny] {✓ Yes} (store);
+    \draw[arrow] (hr_dec.west) -- node[above,font=\tiny] {✗ No} (reject.north);
+    \draw[arrow] (store) -- (release);
+    
+\end{tikzpicture}
+\caption{Bonus Approval BPMN Workflow}
+\label{fig:workflow}
+\end{figure}
+
+\section{Camunda Integration}
+
+The system uses Camunda BPM for process orchestration. Key features:
+
+\begin{itemize}
+    \item Workflow instantiation via \code{CamundaService}
+    \item Process variable management
+    \item Task assignment to roles
+    \item Audit trail for all process steps
+\end{itemize}
+
+\note{The BPMN file is located at \code{workflow/bonusApproval.bpmn} and can be deployed via Camunda Modeler or REST API.}
+
+% ===== CHAPTER 7: SETUP & DEPLOYMENT =====
+\chapter{Setup \& Deployment}
+
+\section{Prerequisites}
+
+\begin{tcolorbox}[colback=background,colframe=darkblue,title=System Requirements]
+\begin{itemize}
+    \item Node.js 18+ (18.18.0 recommended)
+    \item npm 9+
+    \item Docker \& Docker Compose
+    \item Git
+    \item 2GB RAM minimum
+    \item 5GB disk space minimum
+\end{itemize}
+\end{tcolorbox}
+
+\section{Development Setup}
+
+\subsection{Step 1: Infrastructure}
+
+\begin{lstlisting}[language=bash,caption=Start MongoDB and Camunda]
+# From project root
+docker-compose up -d
+
+# Verify services
+docker-compose ps
+\end{lstlisting}
+
+\subsection{Step 2: Backend Setup}
+
+\begin{lstlisting}[language=bash,caption=Backend Installation]
+cd backend
+npm install
+cp ../.env.example .env
+npm run seed           # Seed demo data
+npm run dev            # Start dev server
+# API available at http://localhost:3000/api/v1
+\end{lstlisting}
+
+\subsection{Step 3: Frontend Setup}
+
+\begin{lstlisting}[language=bash,caption=Frontend Installation]
+cd frontend
+npm install
+npm start              # Start dev server
+# Frontend available at http://localhost:4200
+\end{lstlisting}
+
+\section{Production Deployment}
+
+\subsection{Docker Build}
+
+\begin{lstlisting}[language=dockerfile,caption=Backend Dockerfile]
+FROM node:18-alpine
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm ci --only=production
+
+COPY src ./src
+COPY openapi ./openapi
+
+EXPOSE 3000
+CMD ["node", "src/server.js"]
+\end{lstlisting}
+
+\subsection{Environment Configuration}
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{|l|l|p{4cm}|}
+\hline
+\textbf{Variable} & \textbf{Example} & \textbf{Description} \\
+\hline
+NODE\_ENV & production & Environment mode \\
+PORT & 3000 & Server port \\
+MONGODB\_URI & mongodb://localhost:27017 & Database URL \\
+JWT\_SECRET & your-secret-key & JWT signing secret \\
+CORS\_ORIGIN & https://app.example.com & CORS allowed origin \\
+CAMUNDA\_URL & http://camunda:8080 & Camunda engine URL \\
+\hline
+\end{tabular}
+\caption{Environment Variables}
+\end{table}
+
+% ===== CHAPTER 8: INTEGRATIONS =====
+\chapter{External Integrations}
+
+\section{OrangeHRM Integration}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[node distance=4cm and 2cm]
+    \tikzstyle{box}=[rectangle,rounded corners,draw=darkblue,fill=background,thick,minimum width=3cm,minimum height=1.2cm,text width=2.8cm,align=center,font=\small]
+    \tikzstyle{arrow}=[->,>=stealth,line width=1.5pt]
+    
+    \node[box] (app) {HighPerformance};
+    \node[box,right=of app] (orangehrm) {OrangeHRM};
+    
+    \draw[arrow] (app) -- node[above,font=\small] {REST API} (orangehrm);
+    \draw[arrow] (orangehrm) -- node[below,font=\small] {JSON} (app);
+    
+    \node[below=1.5cm of app,align=left,font=\small] (ops) {
+        • Fetch Employee Data \\
+        • Store Bonuses \\
+        • Update Custom Fields
+    };
+    
+\end{tikzpicture}
+\caption{OrangeHRM Integration Flow}
+\end{figure}
+
+\subsection{Configuration}
+
+\begin{lstlisting}[caption=OrangeHRM Setup]
+# .env
+ORANGEHRM_BASE_URL=https://orangehrm.example.com
+ORANGEHRM_USERNAME=admin
+ORANGEHRM_PASSWORD=password
+\end{lstlisting}
+
+\section{OpenCRX Integration}
+
+Orders are fetched from OpenCRX and cached for bonus calculation. The integration provides:
+
+\begin{itemize}
+    \item Order data retrieval (JSON-RPC)
+    \item Client ranking information
+    \item Revenue and probability metrics
+    \item Bonus calculation from orders
+\end{itemize}
+
+\section{Odoo Integration}
+
+\noindent\begin{minipage}{\linewidth}
+\begin{lstlisting}[caption=Odoo JSON-RPC Integration]
+# Fetch employee data
+POST /jsonrpc
+{
+  "jsonrpc": "2.0",
+  "method": "call",
+  "params": {
+    "service": "object",
+    "method": "execute",
+    "args": ["database", "uid", "password", 
+             "hr.employee", "search_read", [], 
+             ["name", "email", "department_id"]]
+  }
+}
+\end{lstlisting}
+\end{minipage}
+
+% ===== CHAPTER 9: TESTING =====
+\chapter{Testing \& Quality}
+
+\section{Test Architecture}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[node distance=3cm and 2cm]
+    \tikzstyle{test}=[rectangle,rounded corners,draw=darkblue,fill=background,thick,minimum width=2.8cm,minimum height=1.2cm,text width=2.5cm,align=center,font=\small]
+    
+    \node[test] (unit) {Unit Tests};
+    \node[test,right=of unit] (integration) {Integration Tests};
+    \node[test,right=of integration] (api) {API Tests};
+    
+    \node[below=of unit,font=\small] (mocha) {Mocha};
+    \node[below=of integration,font=\small] (chai) {Chai + Sinon};
+    \node[below=of api,font=\small] (postman) {Postman};
+    
+    \draw[->,thick] (unit) -- (mocha);
+    \draw[->,thick] (integration) -- (chai);
+    \draw[->,thick] (api) -- (postman);
+    
+\end{tikzpicture}
+\caption{Testing Framework Stack}
+\end{figure}
+
+\section{Running Tests}
+
+\begin{lstlisting}[language=bash,caption=Test Execution]
+# Unit and integration tests
+cd backend
+npm test
+
+# Coverage report
+npm test -- --coverage
+
+# Watch mode
+npm test -- --watch
+\end{lstlisting}
+
+\section{Test Suites}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{lll}
+\toprule
+\textbf{Suite} & \textbf{File} & \textbf{Coverage} \\
+\midrule
+Bonus Service & \code{bonus.service.test.js} & Calculations \\
+Dependencies & \code{dependencies.test.js} & Integrations \\
+Integration & \code{integration/} & Full workflows \\
+\bottomrule
+\end{tabular}
+\caption{Test Suite Organization}
+\end{table}
+
+% ===== CHAPTER 10: TROUBLESHOOTING =====
+\chapter{Troubleshooting \& Support}
+
+\section{Common Issues}
+
+\subsection{MongoDB Connection Failed}
+
+\begin{tcolorbox}[colback=orange!5!white,colframe=orange,title=Issue: Cannot Connect to MongoDB]
+\textbf{Solution:}
+\begin{enumerate}
+    \item Check if MongoDB container is running: \code{docker-compose ps}
+    \item Restart MongoDB: \code{docker-compose restart mongodb}
+    \item Verify URI in .env file
+    \item Check port 27017 availability
+\end{enumerate}
+\end{tcolorbox}
+
+\subsection{Backend Won't Start}
+
+\begin{lstlisting}[language=bash,caption=Debugging Backend Issues]
+# Check port conflicts
+netstat -ano | findstr :3000
+
+# Clear dependencies and reinstall
+rm -rf node_modules package-lock.json
+npm install
+npm run dev
+
+# Check logs
+npm run dev 2>&1 | head -100
+\end{lstlisting}
+
+\subsection{Frontend Build Errors}
+
+\begin{lstlisting}[language=bash,caption=Fixing Angular Build Issues]
+# Clear Angular cache
+rm -rf node_modules/.angular
+
+# Rebuild
+npm install
+npm start
+\end{lstlisting}
+
+\section{Performance Optimization}
+
+\begin{itemize}
+    \item \textbf{Database Indexing} --- Create indexes on frequently queried fields
+    \item \textbf{Response Compression} --- Enable gzip in Express
+    \item \textbf{Caching} --- Implement Redis for session management
+    \item \textbf{API Rate Limiting} --- Prevent abuse
+    \item \textbf{Connection Pooling} --- MongoDB connection optimization
+\end{itemize}
+
+\section{Security Checklist}
+
+\begin{tcolorbox}[colback=background,colframe=darkblue,title=Production Security Checklist]
+\begin{itemize}
+    \item[$\square$] Change JWT\_SECRET to strong random value
+    \item[$\square$] Use HTTPS/TLS in production
+    \item[$\square$] Secure MongoDB with authentication
+    \item[$\square$] Implement rate limiting
+    \item[$\square$] Enable CORS properly
+    \item[$\square$] Validate all user inputs
+    \item[$\square$] Use environment variables for secrets
+    \item[$\square$] Regular dependency updates
+    \item[$\square$] Enable audit logging
+    \item[$\square$] Rotate credentials periodically
+\end{itemize}
+\end{tcolorbox}
+
+% ===== CHAPTER 11: BONUS CALCULATION =====
+\chapter{Bonus Calculation Algorithm}
+
+\section{Overview}
+
+The bonus calculation system computes bonuses based on two components:
+
+\begin{enumerate}
+    \item \textbf{Social Performance Bonus} --- Based on actual vs. target metrics
+    \item \textbf{Order-Based Bonus} --- Based on closed deals and revenue
+\end{enumerate}
+
+\section{Social Performance Calculation}
+
+\subsection{Formula}
+
+The social performance bonus is calculated using:
+
+\[
+\text{Bonus}_{\text{social}} = \sum_{i=1}^{n} \frac{(\text{Actual}_i - \text{Target}_i)}{\text{Target}_i} \times 100,000
+\]
+
+Where:
+\begin{itemize}
+    \item $\text{Actual}_i$ = Actual achieved metric for period $i$
+    \item $\text{Target}_i$ = Target metric for period $i$
+    \item $100,000$ = Base bonus amount
+\end{itemize}
+
+\subsection{Example}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|c|c|c|c|}
+\hline
+\textbf{Month} & \textbf{Target} & \textbf{Actual} & \textbf{Bonus Contribution} \\
+\hline
+January & 100,000 & 120,000 & 20,000 EUR \\
+February & 100,000 & 110,000 & 10,000 EUR \\
+March & 100,000 & 100,000 & 0 EUR \\
+\hline
+Total & 300,000 & 330,000 & 30,000 EUR \\
+\hline
+\end{tabular}
+\caption{Social Performance Bonus Example}
+\end{table}
+
+\subsection{Implementation}
+
+\noindent\begin{minipage}{\linewidth}
+\begin{lstlisting}[caption=Bonus Calculation Implementation]
+async function computeSocialRecordBonus(record) {
+  const { target, actual } = record;
+  if (!target || target === 0) return 0;
+  
+  const variance = (actual - target) / target;
+  const bonus = variance * 100000;
+  
+  return Math.max(0, Math.round(bonus));
+}
+\end{lstlisting}
+\end{minipage}
+
+\section{Order-Based Bonus Calculation}
+
+\subsection{Formula}
+
+Order bonuses consider revenue and closing probability:
+
+\[
+\text{Bonus}_{\text{order}} = \text{Revenue} \times \text{Probability} \times 0.05
+\]
+
+Where:
+\begin{itemize}
+    \item \text{Revenue} = Order value in EUR
+    \item \text{Probability} = Closing probability (0-100\%)
+    \item $0.05$ = Commission rate
+\end{itemize}
+
+\subsection{Example}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|c|c|c|c|}
+\hline
+\textbf{Order} & \textbf{Revenue} & \textbf{Probability} & \textbf{Bonus} \\
+\hline
+ORD001 & 50,000 EUR & 95\% & 2,375 EUR \\
+ORD002 & 30,000 EUR & 80\% & 1,200 EUR \\
+ORD003 & 20,000 EUR & 60\% & 600 EUR \\
+\hline
+Total & 100,000 EUR & --- & 4,175 EUR \\
+\hline
+\end{tabular}
+\caption{Order Bonus Calculation Example}
+\end{table}
+
+\section{Total Bonus Computation}
+
+\[
+\text{Total Bonus} = \text{Bonus}_{\text{social}} + \text{Bonus}_{\text{order}}
+\]
+
+The system persists this as a \code{BonusComputation} record with status tracking through the approval workflow.
+
+\section{Bonus Constraints}
+
+\begin{itemize}
+    \item Minimum bonus: 0 EUR (no negative bonuses)
+    \item Maximum bonus: 500,000 EUR (configurable)
+    \item Precision: 2 decimal places
+    \item Year-based: Annual calculations with monthly/quarterly breakdown
+\end{itemize}
+
+% ===== CHAPTER 12: WORKFLOW & APPROVAL PROCESS =====
+\chapter{Workflow \& Approval Process}
+
+\section{BPMN Workflow Overview}
+
+The bonus approval workflow is implemented using Camunda BPM with the following states:
+
+\subsection{Workflow State Machine}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+    node distance=1.8cm and 1.5cm,
+    state/.style={circle, draw, minimum size=1.5cm, text centered, font=\footnotesize},
+    decision/.style={diamond, draw, aspect=2, text centered, minimum width=1.8cm, font=\footnotesize},
+    terminal/.style={rounded rectangle, draw, minimum width=1.8cm, minimum height=0.7cm, font=\footnotesize}
+]
+
+% Main flow - vertical
+\node[state] (draft) {Draft};
+\node[state, above=of draft] (pending) {Pending};
+\node[decision, above=of pending] (ceo) {CEO\\Review};
+\node[state, above=of ceo] (ceoapproved) {CEO\\Approved};
+\node[decision, above=of ceoapproved] (hr) {HR\\Review};
+
+% Terminals - side by side at top
+\node[terminal, left=2cm of hr] (approved) {Approved};
+\node[terminal, right=2cm of hr] (rejected) {Rejected};
+
+% Main flow arrows
+\draw[->, thick] (draft) -- node[right,font=\tiny] {Submit} (pending);
+\draw[->, thick] (pending) -- node[right,font=\tiny] {Send} (ceo);
+\draw[->, thick] (ceo) -- node[right,font=\tiny] {Approve} (ceoapproved);
+\draw[->, thick] (ceoapproved) -- node[right,font=\tiny] {Forward} (hr);
+\draw[->, thick] (hr) -- node[above,font=\tiny] {Approve} (approved);
+\draw[->, thick] (hr) -- node[above,font=\tiny] {Reject} (rejected);
+
+% Resubmit loop - go around the side
+\draw[->, thick] (rejected) -- ++(1.5,0) |- node[near start,right,font=\tiny] {Resubmit} (draft);
+
+\end{tikzpicture}
+\caption{Bonus Approval Workflow}
+\end{figure}
+
+\section{Workflow States}
+
+\begin{description}[labelindent=1cm, font=\textbf]
+    \item[Draft] - Initial state when bonus computation is created
+    \item[Pending] - Submitted for CEO review
+    \item[CEO Approved] - CEO has reviewed and approved
+    \item[HR Approved] - Final approval from HR (Approved state)
+    \item[Rejected] - Rejected by CEO or HR, returned to Draft
+\end{description}
+
+\section{Approval Task Details}
+
+\subsection{CEO Review Task}
+
+\begin{tcolorbox}[title=CEO Review Process]
+\begin{itemize}
+    \item \textbf{Owner:} CEO (role-based assignment)
+    \item \textbf{Deadline:} 5 business days
+    \item \textbf{Actions:}
+    \begin{itemize}
+        \item Review bonus computation summary
+        \item Check total bonus amount against budget
+        \item Approve or reject with comments
+    \end{itemize}
+    \item \textbf{Exit Criteria:}
+    \begin{itemize}
+        \item Approved → forward to HR
+        \item Rejected → return to draft with feedback
+    \end{itemize}
+\end{itemize}
+\end{tcolorbox}
+
+\subsection{HR Review Task}
+
+\begin{tcolorbox}[title=HR Final Approval Process]
+\begin{itemize}
+    \item \textbf{Owner:} HR Team (role-based assignment)
+    \item \textbf{Deadline:} 3 business days
+    \item \textbf{Actions:}
+    \begin{itemize}
+        \item Verify all data completeness
+        \item Check compliance with company policies
+        \item Final approval or rejection
+    \end{itemize}
+    \item \textbf{Exit Criteria:}
+    \begin{itemize}
+        \item Approved → bonus marked as finalized
+        \item Rejected → return to draft
+    \end{itemize}
+\end{itemize}
+\end{tcolorbox}
+
+\section{Workflow API Endpoints}
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{|l|l|l|p{3cm}|}
+\hline
+\textbf{Method} & \textbf{Endpoint} & \textbf{Action} & \textbf{Description} \\
+\hline
+POST & \texttt{/api/workflow/\{id\}/approve} & CEO/HR Approve & Approve bonus computation \\
+POST & \texttt{/api/workflow/\{id\}/reject} & Reject & Return to draft with reason \\
+GET & \texttt{/api/workflow/\{id\}/history} & Get History & View state transitions \\
+GET & \texttt{/api/workflow/tasks} & Get Tasks & List pending tasks \\
+\hline
+\end{tabular}
+\caption{Workflow API Endpoints}
+\end{table}
+
+\section{Integration with Services}
+
+\subsection{Camunda Service Integration}
+
+The workflow is managed through the \code{CamundaService}:
+
+\begin{lstlisting}[caption=Camunda Service Integration Example]
+// Start workflow
+await camundaService.startProcess('bonus-approval', {
+  bonusId: computation.id,
+  totalAmount: computation.total,
+  salesman: computation.salesman
+});
+
+// Complete CEO approval task
+await camundaService.completeTask(taskId, {
+  action: 'approve',
+  comments: 'Approved by CEO',
+  userId: req.user.id
+});
+\end{lstlisting}
+
+\section{Notifications \& Escalations}
+
+\subsection{Email Notifications}
+
+\begin{itemize}
+    \item \textbf{To CEO:} When bonus reaches pending state
+    \item \textbf{To HR:} When CEO approves
+    \item \textbf{To Salesman:} Final approval notification
+    \item \textbf{Escalation:} If approval exceeds deadline
+\end{itemize}
+
+\subsection{Escalation Rules}
+
+\begin{tcolorbox}[colframe=red!70, title=Escalation Triggers]
+\begin{itemize}
+    \item CEO review exceeds 5 days → escalate to CFO
+    \item HR review exceeds 3 days → escalate to Head of HR
+    \item Rejected twice → manual review required
+\end{itemize}
+\end{tcolorbox}
+
+\section{Workflow Monitoring}
+
+Access workflow metrics at: \url{http://localhost:8080/camunda}
+
+\begin{itemize}
+    \item Active process instances
+    \item Running tasks
+    \item Completed milestones
+    \item Performance metrics
+\end{itemize}
+
+% ===== APPENDIX =====
+\appendix
+
+\chapter{Quick Reference}
+
+\section{API Endpoints Summary}
+
+\begin{longtable}{lll}
+\toprule
+\textbf{Method} & \textbf{Endpoint} & \textbf{Purpose} \\
+\midrule
+\endfirsthead
+\multicolumn{3}{c}{\textit{continued from previous page}} \\
+\toprule
+\textbf{Method} & \textbf{Endpoint} & \textbf{Purpose} \\
+\midrule
+\endhead
+\endfoot
+\hline
+\endlastfoot
+POST & /api/v1/auth/login & User login \\
+GET & /api/v1/salesmen & List salesmen \\
+POST & /api/v1/salesmen & Create salesman \\
+GET & /api/v1/bonus/:id & Get bonus \\
+POST & /api/v1/bonus/:id/compute & Compute bonus \\
+POST & /api/v1/bonus/:id/approve/ceo & CEO approval \\
+POST & /api/v1/bonus/:id/approve/hr & HR approval \\
+GET & /api/v1/performance/social/:id & Get performance \\
+POST & /api/v1/performance/social & Create record \\
+GET & /api/v1/orders/:id & Get orders \\
+GET & /api/v1/health-check & System health \\
+\caption{API Endpoints Reference}
+\label{tab:endpoints}
+\end{longtable}
+
+\section{Demo Credentials}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{lll}
+\toprule
+\textbf{Role} & \textbf{Username} & \textbf{Password} \\
+\midrule
+CEO & ceo & Ceo123! \\
+HR & hr & Hr123! \\
+Salesman & salesman01 & password123 \\
+\bottomrule
+\end{tabular}
+\caption{Demo User Credentials}
+\end{table}
+
+\section{Useful Commands}
+
+\noindent\begin{minipage}{\linewidth}
+\begin{lstlisting}[language=bash,caption=Quick Reference Commands]
+# Start infrastructure
+docker-compose up -d
+
+# Backend operations
+cd backend && npm install && npm run seed && npm run dev
+
+# Frontend operations
+cd frontend && npm install && npm start
+
+# Run tests
+npm run backend:test
+
+# Check health
+curl http://localhost:3000/api/v1/health-check
+
+# View API docs
+# Open: http://localhost:3000/api-docs
+\end{lstlisting}
+\end{minipage}
+
+\chapter{Glossary}
+
+\begin{description}
+    \item[BPMN] Business Process Model and Notation --- Standard for workflow design
+    \item[RBAC] Role-Based Access Control --- Security model for authorization
+    \item[JWT] JSON Web Token --- Stateless authentication method
+    \item[REST] Representational State Transfer --- API architectural style
+    \item[ORM] Object-Relational Mapping --- Mongoose provides this for MongoDB
+    \item[JSON-RPC] JSON Remote Procedure Call --- Lightweight RPC protocol
+    \item[OpenAPI] API specification standard for REST services
+    \item[CORS] Cross-Origin Resource Sharing --- HTTP-based access control
+\end{description}
+
+% Index
+\printindex
+
+\end{document}
