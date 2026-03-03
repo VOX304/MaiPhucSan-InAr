@@ -208,7 +208,7 @@
               "listen": "prerequest",
               "script": {
                 "exec": [
-                  "pm.environment.set('employeeId', 'E_RT_' + Date.now());"
+                  "pm.environment.set('employeeId', 'E' + Date.now());"
                 ],
                 "type": "text/javascript"
               }
