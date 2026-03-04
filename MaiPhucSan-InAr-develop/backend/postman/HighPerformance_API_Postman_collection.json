@@ -1,0 +1,1921 @@
+{
+  "info": {
+    "_postman_id": "886045cf-3e76-46c8-a5eb-00d0bb378ea6",
+    "name": "HighPerformance API — Full Test Suite",
+    "description": "Organized test collection for the HighPerformance semester project.\n\n🟢 TIER 1 — MVP (pass the course)\n🟡 TIER 2 — MUST (good grade)\n🔵 TIER 3 — COULD (very good grade)\n⚪ TIER 4 — NICE-TO-HAVE (bonus)\n\nBefore running: set the 'baseUrl' collection variable to your server (default: http://localhost:3000).\nAfter login, JWT is saved automatically to 'jwt' variable.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "39708727"
+  },
+  "item": [
+    {
+      "name": "🟢 TIER 1 — MVP (Minimum to Pass)",
+      "item": [
+        {
+          "name": "1-1 Health Check — API Root",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200 or 302', () => pm.expect(pm.response.code).to.be.oneOf([200,301,302]));",
+                  "pm.test('Server is alive', () => pm.expect(pm.response.responseTime).to.be.below(3000));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                ""
+              ]
+            },
+            "description": "Verify the server is running."
+          },
+          "response": []
+        },
+        {
+          "name": "1-2 Health Check — API v1 Discovery",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Returns JSON', () => pm.response.to.be.json);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1"
+              ]
+            },
+            "description": "API discovery — confirms v1 is reachable."
+          },
+          "response": []
+        },
+        {
+          "name": "1-3 Login (save JWT)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Has token', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.data.token).to.be.a('string');",
+                  "  pm.collectionVariables.set('jwt', json.data.token);",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"ceo\",\n  \"password\": \"ceo123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Login — JWT is auto-saved to collection variable 'jwt'."
+          },
+          "response": []
+        },
+        {
+          "name": "1-4 Get Current User (/auth/me)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Has user object', () => {",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j).to.have.property('username');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "me"
+              ]
+            },
+            "description": "Verify JWT is valid and user info is returned."
+          },
+          "response": []
+        },
+        {
+          "name": "1-5 Create Salesman (MVP_FR1)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Returns salesman object', () => {",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j).to.have.property('employeeId');",
+                  "  pm.collectionVariables.set('employeeId', j.employeeId);",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"employeeId\": \"E001\",\n  \"name\": \"Max Mustermann\",\n  \"department\": \"Sales\",\n  \"performanceYear\": 2025\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/salesmen",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "salesmen"
+              ]
+            },
+            "description": "MVP_FR1 — Create basic salesman master data."
+          },
+          "response": []
+        },
+        {
+          "name": "1-6 List All Salesmen (MVP_FR1 — Read)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Returns array', () => pm.expect(pm.response.json()).to.be.an('array'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/salesmen",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "salesmen"
+              ]
+            },
+            "description": "MVP_FR1 — Read list of all salesmen."
+          },
+          "response": []
+        },
+        {
+          "name": "1-7 Get Single Salesman by ID (MVP_FR1)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Correct employeeId', () => {",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j.employeeId).to.eql(pm.collectionVariables.get('employeeId'));",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/salesmen/{{employeeId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "salesmen",
+                "{{employeeId}}"
+              ]
+            },
+            "description": "MVP_FR1 — Read individual salesman."
+          },
+          "response": []
+        },
+        {
+          "name": "1-8 Create Social Performance Record (MVP_FR2)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Has recordId', () => {",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j).to.have.property('_id');",
+                  "  pm.collectionVariables.set('recordId', j._id);",
+                  "});",
+                  "pm.test('Individual bonus computed', () => {",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j).to.have.property('bonus');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"employeeId\": \"{{employeeId}}\",\n  \"year\": 2025,\n  \"criteria\": [\n    { \"name\": \"Leadership\",       \"targetValue\": 5, \"actualValue\": 4 },\n    { \"name\": \"Teamwork\",         \"targetValue\": 5, \"actualValue\": 5 },\n    { \"name\": \"Communication\",    \"targetValue\": 4, \"actualValue\": 3 },\n    { \"name\": \"Problem Solving\",  \"targetValue\": 4, \"actualValue\": 4 }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/performance/social",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "performance",
+                "social"
+              ]
+            },
+            "description": "MVP_FR2 — Create a social performance record. Bonus must be auto-computed."
+          },
+          "response": []
+        },
+        {
+          "name": "1-9 List Social Performance Records (MVP_FR2 — Read)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Returns array', () => pm.expect(pm.response.json()).to.be.an('array'));",
+                  "pm.test('Each record has bonus field', () => {",
+                  "  const arr = pm.response.json();",
+                  "  if(arr.length > 0) pm.expect(arr[0]).to.have.property('bonus');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/performance/social/{{employeeId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "performance",
+                "social",
+                "{{employeeId}}"
+              ]
+            },
+            "description": "MVP_FR2 — Read all social performance records for a salesman."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🟡 TIER 2 — MUST (Good Grade)",
+      "item": [
+        {
+          "name": "2-1 Compute Total Bonus (M_FR1 / TR10)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Has totalBonus field', () => {",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j).to.have.property('totalBonus');",
+                  "  pm.expect(j.totalBonus).to.be.a('number');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/bonus/{{employeeId}}/compute",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "bonus",
+                "{{employeeId}}",
+                "compute"
+              ]
+            },
+            "description": "M_FR1 / TR10 — Trigger automatic total bonus computation."
+          },
+          "response": []
+        },
+        {
+          "name": "2-4 CEO Approves Bonus (M_FR4)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Status is CEO_APPROVED', () => {",
+                  "  const j = pm.response.json();",
+                  "  const status = (j.status || j.data?.status || '').toString().toUpperCase();",
+                  "  pm.expect(status).to.eql('CEO_APPROVED');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/bonus/{{employeeId}}/approve/ceo?year=2025",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "bonus",
+                "{{employeeId}}",
+                "approve",
+                "ceo"
+              ],
+              "query": [
+                {
+                  "key": "year",
+                  "value": "2025"
+                }
+              ]
+            },
+            "description": "M_FR4 — CEO approves the bonus. Must call /approve/ceo, not /compute."
+          },
+          "response": []
+        },
+        {
+          "name": "2-5 HR Approves Bonus (M_FR3 / M_FR4)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('HR approval confirmed', () => {",
+                  "  const j = pm.response.json();",
+                  "  const status = (j.status || j.data?.status || '').toString().toUpperCase();",
+                  "  const hrFlag = j.hrApproved === true;",
+                  "  pm.expect(status.includes('HR') || hrFlag).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/bonus/{{employeeId}}/approve/hr?year=2025",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "bonus",
+                "{{employeeId}}",
+                "approve",
+                "hr"
+              ],
+              "query": [
+                {
+                  "key": "year",
+                  "value": "2025"
+                }
+              ]
+            },
+            "description": "M_FR3/M_FR4 — HR approves the bonus. Requires CEO approval first (run 2-4). Bonus is then stored in the HR system."
+          },
+          "response": []
+        },
+        {
+          "name": "2-2 Get Bonus Computation (M_FR1 — Display)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Has totalBonus (number)', () => {",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j).to.have.property('totalBonus');",
+                  "  pm.expect(j.totalBonus).to.be.a('number');",
+                  "});",
+                  "pm.test('Status is COMPUTED', () => {",
+                  "  const j = pm.response.json();",
+                  "  const status = (j.status || j.data?.status || '').toString().toUpperCase();",
+                  "  pm.expect(status).to.include('COMPUTED');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/bonus/{{employeeId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "bonus",
+                "{{employeeId}}"
+              ]
+            },
+            "description": "M_FR1 — Retrieve computed total bonus for a salesman. Bonus must already be computed (run 2-1 first)."
+          },
+          "response": []
+        },
+        {
+          "name": "2-3 Add Remark to Bonus (M_FR2)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 or 201', () => pm.expect(pm.response.code).to.be.oneOf([200, 201]));",
+                  "pm.test('Remark saved', () => {",
+                  "  const j = pm.response.json();",
+                  "  const remark = j.remark ?? j.data?.remark ?? j.remarks?.[0];",
+                  "  pm.expect(remark).to.be.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"remark\": \"Good overall performance.\"}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/bonus/{{employeeId}}/remarks",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "bonus",
+                "{{employeeId}}",
+                "remarks"
+              ]
+            },
+            "description": "M_FR2 — Store a short remark on the bonus record."
+          },
+          "response": []
+        },
+        {
+          "name": "2-6 Sync Salesman Master Data from HR System (M_FR5)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Has name and employeeId', () => {",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j).to.have.property('name');",
+                  "  pm.expect(j).to.have.property('employeeId');",
+                  "});",
+                  "pm.test('Department present', () => {",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j).to.have.property('department');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/salesmen/{{employeeId}}/sync",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "salesmen",
+                "{{employeeId}}",
+                "sync"
+              ]
+            },
+            "description": "M_FR5 — Sync salesman master data from the connected HR system. Returns name, employeeId, and department."
+          },
+          "response": []
+        },
+        {
+          "name": "2-7 Update Social Performance Record (N_FR5)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Updated values returned', () => pm.response.to.be.json);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"criteria\": [\n    { \"name\": \"Leadership\",      \"targetValue\": 5, \"actualValue\": 5 },\n    { \"name\": \"Teamwork\",        \"targetValue\": 5, \"actualValue\": 5 }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/performance/social/records/{{recordId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "performance",
+                "social",
+                "records",
+                "{{recordId}}"
+              ]
+            },
+            "description": "Update target/actual values of a social performance record."
+          },
+          "response": []
+        },
+        {
+          "name": "2-8 Swagger UI accessible (TR3)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Swagger UI reachable', () => pm.expect(pm.response.code).to.be.oneOf([200,301,302]));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api-docs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api-docs"
+              ]
+            },
+            "description": "TR3 — Verify Swagger UI is reachable at /api-docs."
+          },
+          "response": []
+        },
+        {
+          "name": "2-9 OpenAPI YAML Spec (TR3)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('YAML content', () => pm.expect(pm.response.text()).to.include('openapi'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/openapi.yaml",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "openapi.yaml"
+              ]
+            },
+            "description": "TR3 — Fetch the OpenAPI spec in YAML."
+          },
+          "response": []
+        },
+        {
+          "name": "2-10 OpenAPI JSON Spec (TR3)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Valid JSON spec', () => {",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j).to.have.property('openapi');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/openapi.json",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "openapi.json"
+              ]
+            },
+            "description": "TR3 — Fetch the OpenAPI spec in JSON."
+          },
+          "response": []
+        },
+        {
+          "name": "2-11 Integration Health Check (TR4)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Health object returned', () => {",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j).to.be.an('object');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/integration/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "integration",
+                "health"
+              ]
+            },
+            "description": "TR4 — Check reachability of OrangeHRM, OpenCRX, MongoDB, Camunda."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🔵 TIER 3 — COULD (Very Good Grade)",
+      "item": [
+        {
+          "name": "3-1 Create Order Evaluation Record (C_FR1)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Has bonus', () => pm.expect(pm.response.json()).to.have.property('bonus'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"employeeId\": \"{{employeeId}}\",\n  \"year\": 2025,\n  \"orders\": [\n    {\n      \"productName\": \"Product A\",\n      \"clientName\": \"ACME Corp\",\n      \"clientRanking\": \"A\",\n      \"closingProbability\": 0.85,\n      \"numberOfItems\": 100\n    },\n    {\n      \"productName\": \"Product B\",\n      \"clientName\": \"Beta GmbH\",\n      \"clientRanking\": \"B\",\n      \"closingProbability\": 0.60,\n      \"numberOfItems\": 50\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/orders",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "orders"
+              ]
+            },
+            "description": "C_FR1 — Create an order evaluation record with individual bonuses."
+          },
+          "response": []
+        },
+        {
+          "name": "3-2 List Orders + Individual Bonuses (C_FR1)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Returns array', () => pm.expect(pm.response.json()).to.be.an('array'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/orders/{{employeeId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "orders",
+                "{{employeeId}}"
+              ]
+            },
+            "description": "C_FR1 — Display orders evaluation with per-order bonus."
+          },
+          "response": []
+        },
+        {
+          "name": "3-3 Orders Evaluation + Refresh from OpenCRX (C_FR4)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt}}"
+              }
+            ],
+            "url": {
+              "raw": "?refresh=true",
+              "query": [
+                {
+                  "key": "refresh",
+                  "value": "true"
+                }
+              ]
+            },
+            "description": "C_FR4 — Fetch product/client data from OpenCRX with refresh flag."
+          },
+          "response": []
+        },
+        {
+          "name": "3-4 Consolidated View — Single Salesman (C_FR2 / C_FR3)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Has social + orders bonus', () => {",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j).to.have.property('totalBonus');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/salesmen/{{employeeId}}/consolidated",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "salesmen",
+                "{{employeeId}}",
+                "consolidated"
+              ]
+            },
+            "description": "C_FR2/C_FR3 — Consolidated view: social + orders total bonus for one salesman."
+          },
+          "response": []
+        },
+        {
+          "name": "3-5 Consolidated View — All Salesmen",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Returns array', () => pm.expect(pm.response.json()).to.be.an('array'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/salesmen/consolidated",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "salesmen",
+                "consolidated"
+              ]
+            },
+            "description": "Consolidated view for all salesmen (for dashboard/statistics)."
+          },
+          "response": []
+        },
+        {
+          "name": "3-6 Store Combined Bonus in OrangeHRM (C_FR3)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"includeOrders\": true }"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/bonus/{{employeeId}}/approve/hr",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "bonus",
+                "{{employeeId}}",
+                "approve",
+                "hr"
+              ]
+            },
+            "description": "C_FR3 — Store combined total (social + orders) in OrangeHRM."
+          },
+          "response": []
+        },
+        {
+          "name": "3-7 Release Bonus to Salesman (C_FR6)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Released status', () => {",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j).to.satisfy(r => r.released === true || r.status === 'released');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/bonus/{{employeeId}}/release",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "bonus",
+                "{{employeeId}}",
+                "release"
+              ]
+            },
+            "description": "C_FR6 — Release final bonus so salesman can see it."
+          },
+          "response": []
+        },
+        {
+          "name": "3-8 Bonus History (C_FR7 — Persistent Storage)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Returns history array', () => pm.expect(pm.response.json()).to.be.an('array'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/bonus/{{employeeId}}/history",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "bonus",
+                "{{employeeId}}",
+                "history"
+              ]
+            },
+            "description": "C_FR7 — Retrieve stored bonus computation history."
+          },
+          "response": []
+        },
+        {
+          "name": "3-9 Create Qualification (CEO) (C_FR8)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Has qualification data', () => pm.response.to.be.json);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Certified Sales Professional\",\n  \"issuedBy\": \"Sales Institute\",\n  \"year\": 2024,\n  \"level\": \"Advanced\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/qualifications/{{employeeId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "qualifications",
+                "{{employeeId}}"
+              ]
+            },
+            "description": "C_FR8 — CEO creates a qualification stored in OrangeHRM."
+          },
+          "response": []
+        },
+        {
+          "name": "3-10 List Qualifications (C_FR9)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Returns array', () => pm.expect(pm.response.json()).to.be.an('array'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/qualifications/{{employeeId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "qualifications",
+                "{{employeeId}}"
+              ]
+            },
+            "description": "C_FR9 — Salesman can view their qualifications."
+          },
+          "response": []
+        },
+        {
+          "name": "3-11 HR Approves (CEO + HR dual approval) (C_FR5)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/bonus/{{employeeId}}/approve/hr",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "bonus",
+                "{{employeeId}}",
+                "approve",
+                "hr"
+              ]
+            },
+            "description": "C_FR5 — HR assistant approves (after CEO). Dual approval flow."
+          },
+          "response": []
+        },
+        {
+          "name": "3-12 Update Salesman (HR PATCH)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"department\": \"Senior Sales\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/salesmen/{{employeeId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "salesmen",
+                "{{employeeId}}"
+              ]
+            },
+            "description": "HR updates salesman master data."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "⚪ TIER 4 — NICE-TO-HAVE (Bonus Points)",
+      "item": [
+        {
+          "name": "4-1 Salesman Confirms Bonus (N_FR4)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Confirmed', () => {",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j).to.satisfy(r => r.confirmed === true || r.status === 'confirmed');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/bonus/{{employeeId}}/confirm",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "bonus",
+                "{{employeeId}}",
+                "confirm"
+              ]
+            },
+            "description": "N_FR4 — Salesman confirms final bonus computation."
+          },
+          "response": []
+        },
+        {
+          "name": "4-2 Bonus Statistics for Charts (N_FR3)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Has statistics data', () => pm.response.to.be.json);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/statistics/bonus",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "statistics",
+                "bonus"
+              ]
+            },
+            "description": "N_FR3 — Bonus statistics for all salesmen (used for charts)."
+          },
+          "response": []
+        },
+        {
+          "name": "4-3 Odoo Employees (N_FR6 / TR5)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200 or 503', () => pm.expect(pm.response.code).to.be.oneOf([200,503]));",
+                  "if(pm.response.code === 200) {",
+                  "  pm.test('Returns employee array', () => pm.expect(pm.response.json()).to.be.an('array'));",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/odoo/employees",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "odoo",
+                "employees"
+              ]
+            },
+            "description": "N_FR6 / TR5 — Fetch Vaculon LLP employees from Odoo. 503 = Odoo not configured (acceptable)."
+          },
+          "response": []
+        },
+        {
+          "name": "4-4 Start Camunda Workflow (N_FR2 / TR9)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200 or 201', () => pm.expect(pm.response.code).to.be.oneOf([200,201]));",
+                  "pm.test('Has processInstanceId', () => {",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j).to.have.property('processInstanceId');",
+                  "  pm.collectionVariables.set('processInstanceId', j.processInstanceId);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/workflow/bonus/{{employeeId}}/start",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "workflow",
+                "bonus",
+                "{{employeeId}}",
+                "start"
+              ]
+            },
+            "description": "N_FR2 / TR9 — Start Camunda bonus approval workflow."
+          },
+          "response": []
+        },
+        {
+          "name": "4-5 List Camunda Tasks (N_FR2 / TR9)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Returns tasks array', () => {",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j).to.be.an('array');",
+                  "  if(j.length > 0) pm.collectionVariables.set('taskId', j[0].id);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/workflow/process/{{processInstanceId}}/tasks",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "workflow",
+                "process",
+                "{{processInstanceId}}",
+                "tasks"
+              ]
+            },
+            "description": "N_FR2 / TR9 — List open tasks in a Camunda process instance."
+          },
+          "response": []
+        },
+        {
+          "name": "4-6 Complete Camunda Task (N_FR2 / TR9)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200 or 204', () => pm.expect(pm.response.code).to.be.oneOf([200,204]));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"variables\": {\n    \"approved\": true\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/workflow/tasks/{{taskId}}/complete",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "workflow",
+                "tasks",
+                "{{taskId}}",
+                "complete"
+              ]
+            },
+            "description": "N_FR2 / TR9 — Complete a Camunda user task."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🔴 Edge Cases & Error Handling",
+      "item": [
+        {
+          "name": "ERR-1 Unauthorized — No JWT",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 401', () => pm.response.to.have.status(401));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/salesmen",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "salesmen"
+              ]
+            },
+            "description": "Should return 401 when no JWT is provided."
+          },
+          "response": []
+        },
+        {
+          "name": "ERR-2 Salesman Not Found (404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 404', () => pm.response.to.have.status(404));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/salesmen/NONEXISTENT999",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "salesmen",
+                "NONEXISTENT999"
+              ]
+            },
+            "description": "Should return 404 for unknown employeeId."
+          },
+          "response": []
+        },
+        {
+          "name": "ERR-3 Create Salesman — Missing Required Fields (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 400', () => pm.response.to.have.status(400));",
+                  "pm.test('Has error message', () => {",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j).to.have.property('error');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"name\": \"Missing Fields\" }"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/salesmen",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "salesmen"
+              ]
+            },
+            "description": "Validation — missing employeeId, department, year should return 400."
+          },
+          "response": []
+        },
+        {
+          "name": "ERR-4 Invalid Login Credentials (401)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 401', () => pm.response.to.have.status(401));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"hacker\",\n  \"password\": \"wrongpass\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Should reject invalid credentials."
+          },
+          "response": []
+        },
+        {
+          "name": "ERR-5 Duplicate Salesman (409)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 409', () => pm.response.to.have.status(409));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"employeeId\": \"EMP001\",\n  \"name\": \"Duplicate Test\",\n  \"department\": \"Sales\",\n  \"yearOfPerformance\": 2025\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/salesmen",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "salesmen"
+              ]
+            },
+            "description": "Creating the same employeeId twice should return 409 Conflict."
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000"
+    },
+    {
+      "key": "jwt",
+      "value": ""
+    },
+    {
+      "key": "employeeId",
+      "value": "EMP001"
+    },
+    {
+      "key": "recordId",
+      "value": ""
+    },
+    {
+      "key": "processInstanceId",
+      "value": ""
+    },
+    {
+      "key": "taskId",
+      "value": ""
+    }
+  ]
+}
