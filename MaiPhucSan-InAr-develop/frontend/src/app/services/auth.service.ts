@@ -1,9 +1,9 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, tap, map } from 'rxjs';
+import { BehaviorSubject, Observable, tap, map, switchMap } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 
 import { environment } from '../../environments/environment';
-import { ApiResponse, AuthLoginResponse, AuthUser } from '../models/api-models';
+import { AuthUser } from '../models/api-models';
 
 const STORAGE_TOKEN_KEY = 'inar_auth_token';
 const STORAGE_USER_KEY = 'inar_auth_user';
@@ -14,16 +14,10 @@ export class AuthService {
 
   constructor(private http: HttpClient) {}
 
-  /**
-   * Current user as observable.
-   */
   user$(): Observable<AuthUser | null> {
     return this.userSubject.asObservable();
   }
 
-  /**
-   * Current user snapshot.
-   */
   get user(): AuthUser | null {
     return this.userSubject.value;
   }
@@ -37,15 +31,20 @@ export class AuthService {
   }
 
   login(username: string, password: string): Observable<AuthUser> {
+    // Backend returns { data: { token } } — then fetch /auth/me for user object
     return this.http
-      .post<ApiResponse<AuthLoginResponse>>(`${environment.apiBaseUrl}/auth/login`, { username, password })
+      .post<{ data: { token: string } }>(`${environment.apiBaseUrl}/auth/login`, { username, password })
       .pipe(
-        tap((res) => {
-          localStorage.setItem(STORAGE_TOKEN_KEY, res.data.token);
-          localStorage.setItem(STORAGE_USER_KEY, JSON.stringify(res.data.user));
-          this.userSubject.next(res.data.user);
-        }),
-        map((res) => res.data.user)
+        tap((res) => localStorage.setItem(STORAGE_TOKEN_KEY, res.data.token)),
+        switchMap(() =>
+          this.http.get<AuthUser>(`${environment.apiBaseUrl}/auth/me`, {
+            headers: { Authorization: `Bearer ${localStorage.getItem(STORAGE_TOKEN_KEY)!}` }
+          })
+        ),
+        tap((user) => {
+          localStorage.setItem(STORAGE_USER_KEY, JSON.stringify(user));
+          this.userSubject.next(user);
+        })
       );
   }
 
