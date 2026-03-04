@@ -16,7 +16,7 @@ router.get(
 );
 
 // Create record (HR)
-router.post('/performance/social', requireRole('HR'), ctrl.create);
+router.post('/performance/social', requireRole('CEO', 'HR'), ctrl.create);
 
 // Update target/actual/etc (HR) => N_FR5
 router.patch('/performance/social/records/:recordId', requireRole('HR'), ctrl.patch);

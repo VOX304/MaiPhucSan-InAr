@@ -9,7 +9,7 @@ router.param('employeeId', validateEmployeeId);
 
 // List / create
 router.get('/salesmen', requireRole('CEO', 'HR'), ctrl.list);
-router.post('/salesmen', requireRole('HR'), ctrl.create);
+router.post('/salesmen', requireRole('CEO', 'HR'), ctrl.create);
 
 // Consolidated view for all
 router.get('/salesmen/consolidated', requireRole('CEO', 'HR'), ctrl.listConsolidated);

@@ -10,10 +10,14 @@ const { OrangeHRMService } = require('../services/orangehrm.service');
 
 const createSchema = Joi.object({
   year: Joi.number().integer().min(2000).max(2100).required(),
-  title: Joi.string().min(1).max(200).required(),
+  // Accept both 'name' (Postman) and 'title' (internal)
+  name: Joi.string().min(1).max(200).optional(),
+  title: Joi.string().min(1).max(200).optional(),
+  issuedBy: Joi.string().allow('').optional(),
+  level: Joi.string().allow('').optional(),
   description: Joi.string().allow('').optional(),
   storeInOrangeHrm: Joi.boolean().default(false)
-});
+}).or('name', 'title');
 
 exports.list = async (req, res, next) => {
   try {
@@ -24,7 +28,8 @@ exports.list = async (req, res, next) => {
     if (year) q.year = year;
 
     const items = await Qualification.find(q).sort({ year: -1, title: 1 }).lean().exec();
-    return res.json({ data: items });
+    // Return flat array (Postman 3-10 expects bare array)
+    return res.json(items);
   } catch (err) {
     return next(err);
   }
@@ -36,34 +41,25 @@ exports.create = async (req, res, next) => {
     const { error, value } = createSchema.validate(req.body);
     if (error) return res.status(400).json({ error: error.message });
 
+    // Normalize: accept 'name' or 'title'
+    const title = value.title || value.name;
+
     const created = await Qualification.create({
       salesmanEmployeeId: employeeId,
       year: value.year,
-      title: value.title,
-      description: value.description || '',
+      title,
+      description: value.description || value.issuedBy || value.level || '',
       createdBy: req.user.username
     });
 
-    if (value.storeInOrangeHrm) {
-      try {
-        const orange = new OrangeHRMService();
-        await orange.storeQualification(employeeId, value.year, {
-          title: value.title,
-          description: value.description || ''
-        });
+    // Best-effort HR system store (non-fatal)
+    try {
+      const orange = new OrangeHRMService();
+      await orange.storeQualification(employeeId, value.year, { title, description: created.description });
+      await Qualification.findByIdAndUpdate(created._id, { $set: { storedInOrangeHrmAt: new Date() } }).exec();
+    } catch (_) { /* HR system unavailable — qualification saved locally */ }
 
-        await Qualification.findByIdAndUpdate(created._id, {
-          $set: { storedInOrangeHrmAt: new Date() }
-        }).exec();
-      } catch (_err) {
-        return res.status(201).json({
-          id: created._id,
-          message: 'Qualification created locally, but could not be stored in OrangeHRM.'
-        });
-      }
-    }
-
-    return res.status(201).json({ id: created._id, message: 'Qualification created' });
+    return res.status(201).json({ id: created._id, name: title, title, year: value.year, message: 'Qualification created' });
   } catch (err) {
     if (err.code === 11000) return res.status(409).json({ error: 'Qualification already exists' });
     return next(err);

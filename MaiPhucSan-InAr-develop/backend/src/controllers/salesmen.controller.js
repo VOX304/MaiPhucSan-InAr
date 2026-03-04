@@ -36,7 +36,7 @@ function nowYear() {
 exports.list = async (_req, res, next) => {
   try {
     const items = await Salesman.find().sort({ employeeId: 1 }).lean().exec();
-    return res.json({ data: items });
+    return res.json(items);
   } catch (err) {
     return next(err);
   }
@@ -47,7 +47,7 @@ exports.getByEmployeeId = async (req, res, next) => {
     const { employeeId } = req.params;
     const item = await Salesman.findOne({ employeeId }).lean().exec();
     if (!item) return res.status(404).json({ error: 'Salesman not found' });
-    return res.json({ data: item });
+    return res.json(item);
   } catch (err) {
     return next(err);
   }
@@ -59,7 +59,7 @@ exports.create = async (req, res, next) => {
     if (error) return res.status(400).json({ error: error.message });
 
     const created = await Salesman.create(value);
-    return res.status(201).json({ data: created });
+    return res.status(201).json(created.toObject());
   } catch (err) {
     if (err.code === 11000) return res.status(409).json({ error: 'EmployeeId already exists' });
     return next(err);
@@ -109,7 +109,7 @@ exports.syncFromOrangeHrm = async (req, res, next) => {
       { upsert: true, new: true }
     ).lean();
 
-    return res.json({ data: upsert, source: 'orangehrm' });
+    return res.json({ ...upsert, source: 'hr-system' });
   } catch (err) {
     return next(err);
   }
@@ -144,7 +144,7 @@ exports.listConsolidated = async (req, res, next) => {
       });
     }
 
-    return res.json({ data: items });
+    return res.json(items);
   } catch (err) {
     return next(err);
   }
@@ -169,15 +169,14 @@ exports.getConsolidated = async (req, res, next) => {
     const totals = await computeTotalsAsync(social, orders);
 
     return res.json({
-      data: {
-        salesman: s,
-        year,
-        socialRecords: totals.socialRecords,
-        orderRecords: totals.orderRecords,
-        socialTotalEur: totals.socialTotalEur,
-        ordersTotalEur: totals.ordersTotalEur,
-        totalBonusEur: totals.totalBonusEur
-      }
+      salesman: s,
+      year,
+      socialRecords: totals.socialRecords,
+      orderRecords: totals.orderRecords,
+      socialTotalEur: totals.socialTotalEur,
+      ordersTotalEur: totals.ordersTotalEur,
+      totalBonusEur: totals.totalBonusEur,
+      totalBonus: totals.totalBonusEur  // alias for Postman compatibility
     });
   } catch (err) {
     return next(err);

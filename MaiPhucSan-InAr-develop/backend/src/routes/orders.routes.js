@@ -8,6 +8,6 @@ router.use(authRequired);
 router.param('employeeId', validateEmployeeId);
 
 router.get('/orders/:employeeId', allowSelfOrRoles('employeeId', 'CEO', 'HR'), ctrl.listForSalesman);
-router.post('/orders', requireRole('HR'), ctrl.create);
+router.post('/orders', requireRole('CEO', 'HR'), ctrl.create);
 
 module.exports = router;

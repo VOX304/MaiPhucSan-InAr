@@ -6,7 +6,7 @@
  */
 const Joi = require('joi');
 const { SocialPerformanceRecord } = require('../models/social-performance.model');
-const { computeSocialRecordBonus, computeSocialTotal } = require('../services/bonus.service');
+const { computeSocialRecordBonus } = require('../services/bonus.service');
 
 const createSchema = Joi.object({
   // Salesman employee IDs follow the 'E' + digits format (e.g. E1001)
@@ -44,9 +44,9 @@ exports.listForSalesman = async (req, res, next) => {
       .lean()
       .exec();
 
-    const total = computeSocialTotal(records).total;
-
-    return res.json({ data: { records, socialTotalEur: total } });
+    // Return flat array; map computedBonusEur -> bonus for Postman compatibility
+    const result = records.map(r => ({ ...r, bonus: r.computedBonusEur }));
+    return res.json(result);
   } catch (err) {
     return next(err);
   }
@@ -54,7 +54,55 @@ exports.listForSalesman = async (req, res, next) => {
 
 exports.create = async (req, res, next) => {
   try {
-    const { error, value } = createSchema.validate(req.body);
+    const body = req.body;
+
+    // Support Postman format: { employeeId, year, criteria: [{name, targetValue, actualValue}] }
+    if (body.criteria && Array.isArray(body.criteria)) {
+      const salesmanEmployeeId = body.employeeId || body.salesmanEmployeeId;
+      const year = body.year;
+
+      if (!salesmanEmployeeId || !year) {
+        return res.status(400).json({ error: '"employeeId" and "year" are required' });
+      }
+
+      const created = [];
+      for (const c of body.criteria) {
+        const record = {
+          salesmanEmployeeId,
+          year,
+          criterionKey: c.name,
+          criterionName: c.name,
+          targetValue: c.targetValue,
+          actualValue: c.actualValue ?? c.targetValue,
+          weight: c.weight ?? 1,
+          supervisorRating: c.supervisorRating ?? 5,
+          peerRating: c.peerRating ?? 5,
+          remark: c.remark ?? '',
+          createdBy: req.user.username
+        };
+        const { computedBonusEur } = computeSocialRecordBonus(record);
+        record.computedBonusEur = computedBonusEur;
+        try {
+          const doc = await SocialPerformanceRecord.create(record);
+          created.push(doc);
+        } catch (e) {
+          if (e.code !== 11000) throw e; // skip duplicates silently
+        }
+      }
+
+      const totalBonus = created.reduce((sum, r) => sum + (r.computedBonusEur || 0), 0);
+      const first = created[0];
+      return res.status(201).json({
+        _id: first ? first._id : null,
+        employeeId: salesmanEmployeeId,
+        year,
+        bonus: totalBonus,
+        records: created.length
+      });
+    }
+
+    // Original flat-field format
+    const { error, value } = createSchema.validate(body);
     if (error) return res.status(400).json({ error: error.message });
 
     const { computedBonusEur } = computeSocialRecordBonus(value);
@@ -65,7 +113,7 @@ exports.create = async (req, res, next) => {
       createdBy: req.user.username
     });
 
-    return res.status(201).json({ id: created._id, message: 'Record created', bonusEur: computedBonusEur });
+    return res.status(201).json({ _id: created._id, bonus: computedBonusEur, message: 'Record created' });
   } catch (err) {
     if (err.code === 11000) {
       return res

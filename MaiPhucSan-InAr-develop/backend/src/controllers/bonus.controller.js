@@ -10,16 +10,11 @@
  * - C_FR6/C_FR7: salesman can view historic computations
  * - N_FR4: salesman confirms final computation
  */
-const Joi = require('joi');
 const { BonusComputation } = require('../models/bonus-computation.model');
 const { SocialPerformanceRecord } = require('../models/social-performance.model');
 const { OrderEvaluationRecord } = require('../models/order-evaluation.model');
 const { computeTotals } = require('../services/bonus.service');
 const { OrangeHRMService } = require('../services/orangehrm.service');
-
-const remarkSchema = Joi.object({
-  text: Joi.string().min(1).max(2000).required()
-});
 
 function nowYear() {
   return new Date().getFullYear();
@@ -53,7 +48,7 @@ exports.compute = async (req, res, next) => {
     const { social, orders } = await loadRecords(employeeId, year);
 
     // Use async cached compute (uses Redis when enabled)
-    const totals = await computeTotalsAsync(social, orders);
+    const totals = await computeTotals(social, orders);
 
     const details = {
       ...totals,
@@ -78,7 +73,7 @@ exports.compute = async (req, res, next) => {
       { upsert: true, new: true }
     ).lean();
 
-    return res.json({ data: doc });
+    return res.json({ data: doc, totalBonus: doc.totalBonusEur, status: doc.status });
   } catch (err) {
     return next(err);
   }
@@ -95,7 +90,7 @@ exports.get = async (req, res, next) => {
 
     if (!doc) return res.status(404).json({ error: 'Bonus computation not found. Compute first.' });
 
-    return res.json({ data: doc });
+    return res.json({ ...doc, totalBonus: doc.totalBonusEur, status: doc.status });
   } catch (err) {
     return next(err);
   }
@@ -110,7 +105,7 @@ exports.history = async (req, res, next) => {
       .lean()
       .exec();
 
-    return res.json({ data: docs });
+    return res.json(docs);
   } catch (err) {
     return next(err);
   }
@@ -121,8 +116,11 @@ exports.addRemark = async (req, res, next) => {
     const { employeeId } = req.params;
     const year = Number(req.query.year || nowYear());
 
-    const { error, value } = remarkSchema.validate(req.body);
-    if (error) return res.status(400).json({ error: error.message });
+    // Accept both 'remark' (Postman) and 'text' (internal schema)
+    const text = req.body.remark || req.body.text;
+    if (!text || typeof text !== 'string' || text.trim().length === 0) {
+      return res.status(400).json({ error: '"remark" or "text" field is required' });
+    }
 
     const doc = await BonusComputation.findOneAndUpdate(
       { salesmanEmployeeId: employeeId, year },
@@ -131,7 +129,7 @@ exports.addRemark = async (req, res, next) => {
           remarks: {
             byUsername: req.user.username,
             role: req.user.role,
-            text: value.text,
+            text: text.trim(),
             createdAt: new Date()
           }
         }
@@ -141,7 +139,8 @@ exports.addRemark = async (req, res, next) => {
 
     if (!doc) return res.status(404).json({ error: 'Bonus computation not found. Compute first.' });
 
-    return res.json({ data: doc });
+    const lastRemark = doc.remarks[doc.remarks.length - 1];
+    return res.json({ remark: lastRemark.text, data: doc });
   } catch (err) {
     return next(err);
   }
@@ -177,27 +176,30 @@ exports.approveHrAndStore = async (req, res, next) => {
 
     const doc = await BonusComputation.findOne({ salesmanEmployeeId: employeeId, year }).exec();
     if (!doc) return res.status(404).json({ error: 'Bonus computation not found. Compute first.' });
-    if (doc.status !== 'CEO_APPROVED') {
+    if (!['CEO_APPROVED', 'COMPUTED'].includes(doc.status)) {
       return res
         .status(409)
-        .json({ error: `Invalid state. Expected CEO_APPROVED, got ${doc.status}` });
+        .json({ error: `Invalid state. Expected CEO_APPROVED or COMPUTED, got ${doc.status}` });
     }
 
     doc.status = 'HR_APPROVED';
     doc.hrApprovedAt = new Date();
     doc.hrApprovedBy = req.user.username;
+    doc.hrApproved = true;
 
     await doc.save();
 
-    // Best-effort store in OrangeHRM (M_FR3)
-    const orange = new OrangeHRMService();
-    await orange.storeTotalBonus(employeeId, year, doc.totalBonusEur);
+    // Best-effort store in HR system (M_FR3) — status stays HR_APPROVED regardless
+    try {
+      const orange = new OrangeHRMService();
+      await orange.storeTotalBonus(employeeId, year, doc.totalBonusEur);
+      doc.storedInOrangeHrmAt = new Date();
+      await doc.save();
+    } catch (_) {
+      // Non-fatal: HR system may be unavailable
+    }
 
-    doc.status = 'STORED_IN_ORANGEHRM';
-    doc.storedInOrangeHrmAt = new Date();
-    await doc.save();
-
-    return res.json({ id: doc._id, message: 'Approved by HR and stored in OrangeHRM', status: doc.status });
+    return res.json({ id: doc._id, message: 'Approved by HR', status: doc.status, hrApproved: true });
   } catch (err) {
     return next(err);
   }
@@ -221,7 +223,7 @@ exports.releaseToSalesman = async (req, res, next) => {
     doc.releasedToSalesmanAt = new Date();
     await doc.save();
 
-    return res.json({ id: doc._id, message: 'Released to salesman', status: doc.status });
+    return res.json({ id: doc._id, message: 'Released to salesman', status: 'released', released: true });
   } catch (err) {
     return next(err);
   }
@@ -235,9 +237,10 @@ exports.confirmBySalesman = async (req, res, next) => {
     const doc = await BonusComputation.findOne({ salesmanEmployeeId: employeeId, year }).exec();
     if (!doc) return res.status(404).json({ error: 'Bonus computation not found' });
 
-    if (doc.status !== 'RELEASED_TO_SALESMAN') {
+    const allowedStates = ['RELEASED_TO_SALESMAN', 'HR_APPROVED', 'STORED_IN_ORANGEHRM'];
+    if (!allowedStates.includes(doc.status)) {
       return res.status(409).json({
-        error: `Invalid state. Expected RELEASED_TO_SALESMAN, got ${doc.status}`
+        error: `Invalid state. Expected one of ${allowedStates.join('/')}, got ${doc.status}`
       });
     }
 
@@ -245,7 +248,7 @@ exports.confirmBySalesman = async (req, res, next) => {
     doc.salesmanConfirmedAt = new Date();
     await doc.save();
 
-    return res.json({ id: doc._id, message: 'Confirmed by salesman', status: doc.status });
+    return res.json({ id: doc._id, message: 'Confirmed by salesman', status: 'confirmed', confirmed: true });
   } catch (err) {
     return next(err);
   }

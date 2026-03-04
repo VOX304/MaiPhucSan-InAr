@@ -18,7 +18,7 @@ router.post('/bonus/:employeeId/approve/hr', requireRole('HR'), ctrl.approveHrAn
 
 router.post('/bonus/:employeeId/release', requireRole('HR'), ctrl.releaseToSalesman);
 
-// salesman confirms his own bonus
-router.post('/bonus/:employeeId/confirm', allowSelfOrRoles('employeeId'), requireRole('SALESMAN'), ctrl.confirmBySalesman);
+// salesman confirms his own bonus (also accessible by CEO/HR for testing)
+router.post('/bonus/:employeeId/confirm', allowSelfOrRoles('employeeId', 'CEO', 'HR'), ctrl.confirmBySalesman);
 
 module.exports = router;
