@@ -5,14 +5,15 @@ const { requireRole, allowSelfOrRoles } = require('../middleware/roles.middlewar
 const { validateEmployeeId } = require('../middleware/params.middleware');
 
 router.use(authRequired);
-router.param('employeeId', validateEmployeeId);
 
-// List / create
+// Static routes MUST be declared before router.param() to prevent
+// 'consolidated' being validated as an employeeId and returning 404.
 router.get('/salesmen', requireRole('CEO', 'HR'), ctrl.list);
 router.post('/salesmen', requireRole('CEO', 'HR'), ctrl.create);
-
-// Consolidated view for all
 router.get('/salesmen/consolidated', requireRole('CEO', 'HR'), ctrl.listConsolidated);
+
+// Now register the param validator — only applies to :employeeId param routes below
+router.param('employeeId', validateEmployeeId);
 
 // Read/update single
 router.get('/salesmen/:employeeId', allowSelfOrRoles('employeeId', 'CEO', 'HR'), ctrl.getByEmployeeId);

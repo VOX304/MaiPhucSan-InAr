@@ -14,7 +14,7 @@ router.get('/bonus/:employeeId/history', allowSelfOrRoles('employeeId', 'CEO', '
 router.post('/bonus/:employeeId/remarks', allowSelfOrRoles('employeeId', 'CEO', 'HR'), ctrl.addRemark);
 
 router.post('/bonus/:employeeId/approve/ceo', requireRole('CEO'), ctrl.approveCeo);
-router.post('/bonus/:employeeId/approve/hr', requireRole('CEO', 'HR'), ctrl.approveHrAndStore);
+router.post('/bonus/:employeeId/approve/hr', requireRole('HR'), ctrl.approveHrAndStore);
 
 router.post('/bonus/:employeeId/release', requireRole('HR'), ctrl.releaseToSalesman);
 

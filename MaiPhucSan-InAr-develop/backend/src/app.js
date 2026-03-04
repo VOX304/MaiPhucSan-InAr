@@ -91,10 +91,10 @@ app.use((req, res) => {
   res.status(404).json({ error: 'Not Found', path: req.originalUrl });
 });
 
-// Error handler
-app.use((err, _req, res) => {
+// Error handler — must have exactly 4 params for Express to recognise it
+app.use((err, _req, res, _next) => {
   logger.error('Unhandled error', err);
-  const status = err.status || 500;
+  const status = err.status || err.statusCode || 500;
   res.status(status).json({ error: err.message || 'Internal Server Error' });
 });
 

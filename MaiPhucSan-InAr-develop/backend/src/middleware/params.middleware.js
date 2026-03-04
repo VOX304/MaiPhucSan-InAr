@@ -6,8 +6,8 @@ const nonEmptyIdSchema = Joi.string().min(1).required();
 
 function validateEmployeeId(req, res, next, value) {
   const { error } = employeeIdSchema.validate(value);
-  if (error) return res.status(400).json({ error: 'Invalid employeeId' });
-  // keep as string (DB stores employeeId as string like 'E1001')
+  // Return 404 for invalid format — from the client's perspective the resource simply doesn't exist
+  if (error) return res.status(404).json({ error: 'Salesman not found' });
   return next();
 }
 

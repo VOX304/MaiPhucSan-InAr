@@ -49,6 +49,13 @@ exports.listForSalesman = async (req, res, next) => {
     const records = await SocialPerformanceRecord.find({ salesmanEmployeeId: employeeId, year })
       .sort({ criterionKey: 1 }).lean().exec();
 
+    // Fall back to most recent year with data if this year has none
+    if (records.length === 0) {
+      const latest = await SocialPerformanceRecord.find({ salesmanEmployeeId: employeeId })
+        .sort({ year: -1, criterionKey: 1 }).limit(20).lean().exec();
+      return res.json(latest.map(formatRecord));
+    }
+
     return res.json(records.map(formatRecord));
   } catch (err) {
     return next(err);
@@ -95,8 +102,14 @@ exports.create = async (req, res, next) => {
       }
 
       const totalBonus = created.reduce((sum, r) => sum + (r.computedBonusEur || 0), 0);
+
+      // If every criterion was a duplicate, surface a 409
+      if (created.length === 0) {
+        return res.status(409).json({ error: 'All records already exist for this salesman/year' });
+      }
+
       return res.status(201).json({
-        _id:        created[0]?._id ?? null,
+        _id:        created[0]._id,
         employeeId: salesmanEmployeeId,
         year,
         bonus:      totalBonus,
@@ -122,7 +135,28 @@ exports.create = async (req, res, next) => {
 exports.patch = async (req, res, next) => {
   try {
     const { recordId } = req.params;
-    const { error, value } = patchSchema.validate(req.body);
+    const body = req.body;
+
+    // Postman 2-7 sends criteria array — find the record and apply the matching entry
+    if (body.criteria && Array.isArray(body.criteria)) {
+      const existing = await SocialPerformanceRecord.findById(recordId).exec();
+      if (!existing) return res.status(404).json({ error: 'Record not found' });
+
+      // Find the matching criterion by name, or use the first one
+      const match = body.criteria.find(c => c.name === existing.criterionName) || body.criteria[0];
+      if (match) {
+        if (match.targetValue !== undefined) existing.targetValue = match.targetValue;
+        if (match.actualValue !== undefined) existing.actualValue = match.actualValue;
+      }
+      existing.updatedBy = req.user.username;
+      const { computedBonusEur } = computeSocialRecordBonus(existing.toObject());
+      existing.computedBonusEur = computedBonusEur;
+      await existing.save();
+      return res.json(formatRecord(existing.toObject()));
+    }
+
+    // Flat-field format
+    const { error, value } = patchSchema.validate(body);
     if (error) return res.status(400).json({ error: error.message });
 
     const existing = await SocialPerformanceRecord.findById(recordId).exec();

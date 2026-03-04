@@ -77,14 +77,20 @@ exports.get = async (req, res, next) => {
     const { employeeId } = req.params;
     const year = Number(req.query.year || nowYear());
 
-    const doc = await BonusComputation.findOne({ salesmanEmployeeId: employeeId, year })
+    // Try requested year first, fall back to most recent computed doc
+    let doc = await BonusComputation.findOne({ salesmanEmployeeId: employeeId, year })
       .lean().exec();
+
+    if (!doc) {
+      doc = await BonusComputation.findOne({ salesmanEmployeeId: employeeId })
+        .sort({ year: -1 }).lean().exec();
+    }
 
     if (!doc) return res.status(404).json({ error: 'Bonus computation not found. Run compute first.' });
 
     return res.json({
       employeeId,
-      year,
+      year:        doc.year,
       status:      doc.status,
       totalBonus:  doc.totalBonusEur,
       socialTotal: doc.socialTotalEur,
@@ -168,14 +174,18 @@ exports.approveCeo = async (req, res, next) => {
 
     const doc = await BonusComputation.findOne({ salesmanEmployeeId: employeeId, year }).exec();
     if (!doc) return res.status(404).json({ error: 'Bonus computation not found. Run compute first.' });
-    if (doc.status !== 'COMPUTED') {
-      return res.status(409).json({ error: `Expected COMPUTED, got ${doc.status}` });
-    }
 
-    doc.status        = 'CEO_APPROVED';
-    doc.ceoApprovedAt = new Date();
-    doc.ceoApprovedBy = req.user.username;
-    await doc.save();
+    // Allow COMPUTED; also idempotent if already CEO_APPROVED or beyond
+    const alreadyApproved = ['CEO_APPROVED', 'HR_APPROVED', 'STORED_IN_ORANGEHRM', 'RELEASED_TO_SALESMAN', 'SALESMAN_CONFIRMED'];
+    if (!alreadyApproved.includes(doc.status)) {
+      if (doc.status !== 'COMPUTED') {
+        return res.status(409).json({ error: `Expected COMPUTED, got ${doc.status}` });
+      }
+      doc.status        = 'CEO_APPROVED';
+      doc.ceoApprovedAt = new Date();
+      doc.ceoApprovedBy = req.user.username;
+      await doc.save();
+    }
 
     return res.json({
       employeeId,
@@ -217,9 +227,10 @@ exports.approveHrAndStore = async (req, res, next) => {
     try {
       const orange = new OrangeHRMService();
       await orange.storeTotalBonus(employeeId, year, doc.totalBonusEur);
+      doc.status = 'STORED_IN_ORANGEHRM';
       doc.storedInOrangeHrmAt = new Date();
       await doc.save();
-    } catch (_) { /* HR system unavailable */ }
+    } catch (_) { /* HR system unavailable — status stays HR_APPROVED */ }
 
     return res.json({
       employeeId,

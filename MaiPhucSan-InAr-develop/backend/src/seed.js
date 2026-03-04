@@ -3,6 +3,10 @@
  *
  * TR2: provide sufficient test data for social performance records.
  *
+ * Aligned with Postman test suite:
+ *   - employeeId: E001 (matches {{employeeId}} collection variable)
+ *   - years: 2025 (main test year) + current year as fallback
+ *
  * Usage:
  *   cd backend
  *   npm run seed
@@ -17,68 +21,90 @@ const { computeSocialRecordBonus, computeOrderRecordBonus } = require('./service
 async function upsertUser({ username, password, role, employeeId }) {
   const existing = await User.findOne({ username }).exec();
   if (existing) return existing;
-
   const passwordHash = await User.hashPassword(password);
   return User.create({ username, passwordHash, role, employeeId: employeeId || null });
 }
 
-async function run() {
-  const year = new Date().getFullYear();
-
-  await connectMongo();
-
-  // Users (N_FR1)
-  await upsertUser({ username: 'ceo', password: 'ceo123', role: 'CEO' });
-  await upsertUser({ username: 'hr', password: 'hr123', role: 'HR' });
-  await upsertUser({ username: 'sales1', password: 'sales123', role: 'SALESMAN', employeeId: 'E1001' });
-
-  // Salesmen (MVP_FR1)
-  await Salesman.findOneAndUpdate(
-    { employeeId: 'E1001' },
-    { $set: { employeeId: 'E1001', name: 'Alex Miller', department: 'Sales', performanceYear: year } },
-    { upsert: true }
-  );
-  await Salesman.findOneAndUpdate(
-    { employeeId: 'E1002' },
-    { $set: { employeeId: 'E1002', name: 'Taylor Nguyen', department: 'Sales', performanceYear: year } },
-    { upsert: true }
-  );
-
-  // Social performance records (MVP_FR2) for E1001
+async function seedSocialRecords(employeeId, year) {
   const criteria = [
-    { criterionKey: 'teamwork', criterionName: 'Teamwork', weight: 0.25, targetValue: 10, actualValue: 9, supervisorRating: 4, peerRating: 5 },
-    { criterionKey: 'communication', criterionName: 'Communication', weight: 0.25, targetValue: 10, actualValue: 10, supervisorRating: 5, peerRating: 4 },
-    { criterionKey: 'reliability', criterionName: 'Reliability', weight: 0.25, targetValue: 10, actualValue: 8, supervisorRating: 4, peerRating: 4 },
-    { criterionKey: 'leadership', criterionName: 'Leadership', weight: 0.25, targetValue: 10, actualValue: 7, supervisorRating: 3, peerRating: 4 }
+    { criterionKey: 'leadership',    criterionName: 'Leadership',    weight: 0.25, targetValue: 5, actualValue: 4, supervisorRating: 4, peerRating: 4 },
+    { criterionKey: 'teamwork',      criterionName: 'Teamwork',      weight: 0.25, targetValue: 5, actualValue: 5, supervisorRating: 5, peerRating: 5 },
+    { criterionKey: 'communication', criterionName: 'Communication', weight: 0.25, targetValue: 4, actualValue: 3, supervisorRating: 4, peerRating: 3 },
+    { criterionKey: 'problem_solving',criterionName: 'Problem Solving',weight: 0.25, targetValue: 4, actualValue: 4, supervisorRating: 4, peerRating: 5 }
   ];
 
   for (const c of criteria) {
-    const { computedBonusEur } = computeSocialRecordBonus({ ...c, year, salesmanEmployeeId: 'E1001' });
+    const { computedBonusEur } = computeSocialRecordBonus({ ...c, year, salesmanEmployeeId: employeeId });
     await SocialPerformanceRecord.findOneAndUpdate(
-      { salesmanEmployeeId: 'E1001', year, criterionKey: c.criterionKey },
-      { $set: { salesmanEmployeeId: 'E1001', year, ...c, computedBonusEur, createdBy: 'seed' } },
+      { salesmanEmployeeId: employeeId, year, criterionKey: c.criterionKey },
+      { $set: { salesmanEmployeeId: employeeId, year, ...c, computedBonusEur, createdBy: 'seed' } },
       { upsert: true }
     );
   }
+}
 
-  // Orders records (COULD) for E1001 (manual demo data)
+async function seedOrderRecords(employeeId, year) {
   const orders = [
-    { orderId: 'SO-001', productName: 'Laptop', clientName: 'Acme GmbH', clientRanking: 2, closingProbability: 0.8, itemsCount: 3, revenueEur: 4500 },
-    { orderId: 'SO-002', productName: 'Printer', clientName: 'Beta AG', clientRanking: 4, closingProbability: 0.6, itemsCount: 8, revenueEur: 1200 },
-    { orderId: 'SO-003', productName: 'Server', clientName: 'Gamma SE', clientRanking: 1, closingProbability: 0.4, itemsCount: 1, revenueEur: 15000 }
+    { orderId: `order-${year}-1`, productName: 'Product A', clientName: 'ACME Corp',  clientRanking: 1, closingProbability: 0.85, itemsCount: 100, revenueEur: 8000 },
+    { orderId: `order-${year}-2`, productName: 'Product B', clientName: 'Beta GmbH',  clientRanking: 2, closingProbability: 0.60, itemsCount: 50,  revenueEur: 3500 },
+    { orderId: `order-${year}-3`, productName: 'Product C', clientName: 'Gamma AG',   clientRanking: 3, closingProbability: 0.45, itemsCount: 20,  revenueEur: 1200 }
   ];
 
   for (const o of orders) {
-    const { computedBonusEur } = computeOrderRecordBonus({ ...o, year, salesmanEmployeeId: 'E1001' });
+    const { computedBonusEur } = computeOrderRecordBonus({ ...o, year, salesmanEmployeeId: employeeId });
     await OrderEvaluationRecord.findOneAndUpdate(
-      { salesmanEmployeeId: 'E1001', year, orderId: o.orderId },
-      { $set: { salesmanEmployeeId: 'E1001', year, ...o, computedBonusEur } },
+      { salesmanEmployeeId: employeeId, year, orderId: o.orderId },
+      { $set: { salesmanEmployeeId: employeeId, year, ...o, computedBonusEur } },
       { upsert: true }
     );
   }
+}
+
+async function run() {
+  const currentYear = new Date().getFullYear();
+  const testYear = 2025; // matches Postman ?year=2025
+
+  await connectMongo();
+
+  // ── Users (N_FR1) ──────────────────────────────────────────────────────────
+  await upsertUser({ username: 'ceo',    password: 'ceo123',   role: 'CEO' });
+  await upsertUser({ username: 'hr',     password: 'hr123',    role: 'HR' });
+  await upsertUser({ username: 'sales1', password: 'sales123', role: 'SALESMAN', employeeId: 'E001' });
+
+  // ── Salesmen (MVP_FR1) ─────────────────────────────────────────────────────
+  // E001 matches Postman {{employeeId}} variable (set by 1-5 Create Salesman)
+  await Salesman.findOneAndUpdate(
+    { employeeId: 'E001' },
+    { $set: { employeeId: 'E001', name: 'Max Mustermann', department: 'Sales', performanceYear: testYear } },
+    { upsert: true }
+  );
+  await Salesman.findOneAndUpdate(
+    { employeeId: 'E002' },
+    { $set: { employeeId: 'E002', name: 'Taylor Nguyen', department: 'Sales', performanceYear: testYear } },
+    { upsert: true }
+  );
+  // EMP001 seeded so ERR-5 duplicate test returns 409
+  await Salesman.findOneAndUpdate(
+    { employeeId: 'EMP001' },
+    { $set: { employeeId: 'EMP001', name: 'Duplicate Test', department: 'Sales', performanceYear: testYear } },
+    { upsert: true }
+  );
+
+  // ── Social performance records (MVP_FR2) ───────────────────────────────────
+  // Seed for both testYear (2025) and currentYear so GET/compute always finds data
+  await seedSocialRecords('E001', testYear);
+  if (currentYear !== testYear) {
+    await seedSocialRecords('E001', currentYear);
+  }
+
+  // ── Order evaluation records (C_FR1) ──────────────────────────────────────
+  await seedOrderRecords('E001', testYear);
+  if (currentYear !== testYear) {
+    await seedOrderRecords('E001', currentYear);
+  }
 
   // eslint-disable-next-line no-console
-  console.log('Seed completed.');
+  console.log(`Seed completed. Data seeded for E001, years: ${testYear}${currentYear !== testYear ? `, ${currentYear}` : ''}`);
 }
 
 run()

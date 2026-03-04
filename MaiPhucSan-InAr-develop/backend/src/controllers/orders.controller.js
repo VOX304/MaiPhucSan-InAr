@@ -8,7 +8,8 @@ const { OpenCRXService } = require('../services/opencrx.service');
 const { computeOrderRecordBonus } = require('../services/bonus.service');
 
 const createSchema = Joi.object({
-  salesmanEmployeeId: Joi.string().pattern(/^E\d+$/).required(),
+  salesmanEmployeeId: Joi.string().pattern(/^E\d+$/).optional(),
+  employeeId:         Joi.string().pattern(/^E\d+$/).optional(),  // alias
   year:               Joi.number().integer().min(2000).max(2100).required(),
   orderId:            Joi.string().min(1).max(200).required(),
   productName:        Joi.string().allow('').optional(),
@@ -18,7 +19,7 @@ const createSchema = Joi.object({
   itemsCount:         Joi.number().min(0).optional(),
   revenueEur:         Joi.number().min(0).optional(),
   remark:             Joi.string().allow('').optional()
-});
+}).or('salesmanEmployeeId', 'employeeId');
 
 // Map letter rankings A-E → numeric 1-5
 function rankingToNumber(r) {
@@ -63,6 +64,13 @@ exports.listForSalesman = async (req, res, next) => {
 
     const records = await OrderEvaluationRecord.find({ salesmanEmployeeId: employeeId, year })
       .sort({ orderId: 1 }).lean().exec();
+
+    // Fall back to most recent year with data if this year has none
+    if (records.length === 0) {
+      const latest = await OrderEvaluationRecord.find({ salesmanEmployeeId: employeeId })
+        .sort({ year: -1, orderId: 1 }).limit(20).lean().exec();
+      return res.json(latest.map(formatOrder));
+    }
 
     return res.json(records.map(formatOrder));
   } catch (err) {
@@ -120,6 +128,12 @@ exports.create = async (req, res, next) => {
     // Flat-field format
     const { error, value } = createSchema.validate(body);
     if (error) return res.status(400).json({ error: error.message });
+
+    // Normalize employeeId alias
+    if (!value.salesmanEmployeeId && value.employeeId) {
+      value.salesmanEmployeeId = value.employeeId;
+    }
+    delete value.employeeId;
 
     const { computedBonusEur } = computeOrderRecordBonus(value);
     const created = await OrderEvaluationRecord.create({ ...value, computedBonusEur });

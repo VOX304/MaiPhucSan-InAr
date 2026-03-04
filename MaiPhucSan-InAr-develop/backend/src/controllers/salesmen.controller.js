@@ -11,11 +11,12 @@ const { computeTotalsAsync } = require('../services/bonus.service');
 const { OrangeHRMService } = require('../services/orangehrm.service');
 
 const createSchema = Joi.object({
-  employeeId:      Joi.string().pattern(/^E\d+$/).required(),
-  name:            Joi.string().min(1).max(200).required(),
-  department:      Joi.string().min(1).max(200).required(),
-  performanceYear: Joi.number().integer().min(2000).max(2100).required(),
-  orangeHrmId:     Joi.string().allow(null, '').optional()
+  employeeId:       Joi.string().min(1).max(50).required(),  // relaxed — duplicate check returns 409
+  name:             Joi.string().min(1).max(200).required(),
+  department:       Joi.string().min(1).max(200).required(),
+  performanceYear:  Joi.number().integer().min(2000).max(2100).optional(),
+  yearOfPerformance:Joi.number().integer().min(2000).max(2100).optional(), // Postman alias
+  orangeHrmId:      Joi.string().allow(null, '').optional()
 });
 
 const patchSchema = Joi.object({
@@ -54,6 +55,15 @@ exports.create = async (req, res, next) => {
     const { error, value } = createSchema.validate(req.body);
     if (error) return res.status(400).json({ error: error.message });
 
+    // Normalize yearOfPerformance -> performanceYear
+    if (!value.performanceYear && value.yearOfPerformance) {
+      value.performanceYear = value.yearOfPerformance;
+    }
+    if (!value.performanceYear) {
+      value.performanceYear = new Date().getFullYear();
+    }
+    delete value.yearOfPerformance;
+
     const created = await Salesman.create(value);
     return res.status(201).json(created.toObject());
   } catch (err) {
@@ -85,14 +95,20 @@ exports.syncFromOrangeHrm = async (req, res, next) => {
     const { employeeId } = req.params;
     const year = Number(req.query.year || nowYear());
 
-    const orange = new OrangeHRMService();
-    const master = await orange.fetchSalesmanMasterData(employeeId);
-
-    const upsert = await Salesman.findOneAndUpdate(
-      { employeeId },
-      { $set: { employeeId, name: master.name, department: master.department, performanceYear: year, orangeHrmId: master.orangeHrmId || null } },
-      { upsert: true, new: true }
-    ).lean();
+    let upsert;
+    try {
+      const orange = new OrangeHRMService();
+      const master = await orange.fetchSalesmanMasterData(employeeId);
+      upsert = await Salesman.findOneAndUpdate(
+        { employeeId },
+        { $set: { employeeId, name: master.name, department: master.department, performanceYear: year, orangeHrmId: master.orangeHrmId || null } },
+        { upsert: true, new: true }
+      ).lean();
+    } catch (_) {
+      // HR system unavailable — return existing local record if present
+      upsert = await Salesman.findOne({ employeeId }).lean().exec();
+      if (!upsert) return res.status(503).json({ error: 'HR system unavailable and no local record found' });
+    }
 
     return res.json({
       employeeId:      upsert.employeeId,
