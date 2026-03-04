@@ -1,11 +1,7 @@
 /**
- * Salesmen controller (MongoDB-backed).
- *
+ * Salesmen controller.
  * MVP_FR1: create/read master data.
- * M_FR5: can sync / read from OrangeHRM.
- *
- * Additionally:
- * - consolidated views (salesman + records + computed totals) used by the cockpit UI.
+ * M_FR5:   sync from HR system.
  */
 const Joi = require('joi');
 const { Salesman } = require('../models/salesman.model');
@@ -15,24 +11,22 @@ const { computeTotalsAsync } = require('../services/bonus.service');
 const { OrangeHRMService } = require('../services/orangehrm.service');
 
 const createSchema = Joi.object({
-  // Employee IDs should follow the 'E' + digits format (e.g. E1001)
-  employeeId: Joi.string().pattern(/^E\d+$/).required(),
-  name: Joi.string().min(1).max(200).required(),
-  department: Joi.string().min(1).max(200).required(),
+  employeeId:      Joi.string().pattern(/^E\d+$/).required(),
+  name:            Joi.string().min(1).max(200).required(),
+  department:      Joi.string().min(1).max(200).required(),
   performanceYear: Joi.number().integer().min(2000).max(2100).required(),
-  orangeHrmId: Joi.string().allow(null, '').optional()
+  orangeHrmId:     Joi.string().allow(null, '').optional()
 });
 
 const patchSchema = Joi.object({
-  name: Joi.string().min(1).max(200).optional(),
-  department: Joi.string().min(1).max(200).optional(),
+  name:            Joi.string().min(1).max(200).optional(),
+  department:      Joi.string().min(1).max(200).optional(),
   performanceYear: Joi.number().integer().min(2000).max(2100).optional()
 }).min(1);
 
-function nowYear() {
-  return new Date().getFullYear();
-}
+function nowYear() { return new Date().getFullYear(); }
 
+// ─── 1-6  List all salesmen ───────────────────────────────────────────────────
 exports.list = async (_req, res, next) => {
   try {
     const items = await Salesman.find().sort({ employeeId: 1 }).lean().exec();
@@ -42,6 +36,7 @@ exports.list = async (_req, res, next) => {
   }
 };
 
+// ─── 1-7  Get single salesman ─────────────────────────────────────────────────
 exports.getByEmployeeId = async (req, res, next) => {
   try {
     const { employeeId } = req.params;
@@ -53,6 +48,7 @@ exports.getByEmployeeId = async (req, res, next) => {
   }
 };
 
+// ─── 1-5  Create salesman ─────────────────────────────────────────────────────
 exports.create = async (req, res, next) => {
   try {
     const { error, value } = createSchema.validate(req.body);
@@ -66,6 +62,7 @@ exports.create = async (req, res, next) => {
   }
 };
 
+// ─── 3-12  Patch salesman ─────────────────────────────────────────────────────
 exports.patch = async (req, res, next) => {
   try {
     const { employeeId } = req.params;
@@ -73,20 +70,16 @@ exports.patch = async (req, res, next) => {
     if (error) return res.status(400).json({ error: error.message });
 
     const updated = await Salesman.findOneAndUpdate({ employeeId }, { $set: value }, { new: true })
-      .lean()
-      .exec();
+      .lean().exec();
 
     if (!updated) return res.status(404).json({ error: 'Salesman not found' });
-
-    return res.json({ data: updated });
+    return res.json(updated);
   } catch (err) {
     return next(err);
   }
 };
 
-/**
- * Fetch master data from OrangeHRM and upsert into Mongo.
- */
+// ─── 2-6  Sync from HR system ─────────────────────────────────────────────────
 exports.syncFromOrangeHrm = async (req, res, next) => {
   try {
     const { employeeId } = req.params;
@@ -97,52 +90,44 @@ exports.syncFromOrangeHrm = async (req, res, next) => {
 
     const upsert = await Salesman.findOneAndUpdate(
       { employeeId },
-      {
-        $set: {
-          employeeId,
-          name: master.name,
-          department: master.department,
-          performanceYear: year,
-          orangeHrmId: master.orangeHrmId || null
-        }
-      },
+      { $set: { employeeId, name: master.name, department: master.department, performanceYear: year, orangeHrmId: master.orangeHrmId || null } },
       { upsert: true, new: true }
     ).lean();
 
-    return res.json({ ...upsert, source: 'hr-system' });
+    return res.json({
+      employeeId:      upsert.employeeId,
+      name:            upsert.name,
+      department:      upsert.department,
+      performanceYear: upsert.performanceYear,
+      source:          'hr-system'
+    });
   } catch (err) {
     return next(err);
   }
 };
 
-/**
- * Consolidated view for all salesmen (salesman + records + computed totals).
- */
+// ─── 3-5  Consolidated — all salesmen ────────────────────────────────────────
 exports.listConsolidated = async (req, res, next) => {
   try {
     const year = Number(req.query.year || nowYear());
-
     const salesmen = await Salesman.find().sort({ employeeId: 1 }).lean().exec();
 
-    const items = [];
-    for (const s of salesmen) {
+    const items = await Promise.all(salesmen.map(async s => {
       const [social, orders] = await Promise.all([
         SocialPerformanceRecord.find({ salesmanEmployeeId: s.employeeId, year }).lean().exec(),
         OrderEvaluationRecord.find({ salesmanEmployeeId: s.employeeId, year }).lean().exec()
       ]);
-
       const totals = await computeTotalsAsync(social, orders);
-
-      items.push({
-        salesman: s,
+      return {
+        employeeId:  s.employeeId,
+        name:        s.name,
+        department:  s.department,
         year,
-        socialRecords: totals.socialRecords,
-        orderRecords: totals.orderRecords,
-        socialTotalEur: totals.socialTotalEur,
-        ordersTotalEur: totals.ordersTotalEur,
-        totalBonusEur: totals.totalBonusEur
-      });
-    }
+        socialTotal: totals.socialTotalEur,
+        ordersTotal: totals.ordersTotalEur,
+        totalBonus:  totals.totalBonusEur
+      };
+    }));
 
     return res.json(items);
   } catch (err) {
@@ -150,9 +135,7 @@ exports.listConsolidated = async (req, res, next) => {
   }
 };
 
-/**
- * Consolidated view for one salesman.
- */
+// ─── 3-4  Consolidated — single salesman ─────────────────────────────────────
 exports.getConsolidated = async (req, res, next) => {
   try {
     const { employeeId } = req.params;
@@ -165,18 +148,16 @@ exports.getConsolidated = async (req, res, next) => {
       SocialPerformanceRecord.find({ salesmanEmployeeId: employeeId, year }).lean().exec(),
       OrderEvaluationRecord.find({ salesmanEmployeeId: employeeId, year }).lean().exec()
     ]);
-
     const totals = await computeTotalsAsync(social, orders);
 
     return res.json({
-      salesman: s,
+      employeeId:  s.employeeId,
+      name:        s.name,
+      department:  s.department,
       year,
-      socialRecords: totals.socialRecords,
-      orderRecords: totals.orderRecords,
-      socialTotalEur: totals.socialTotalEur,
-      ordersTotalEur: totals.ordersTotalEur,
-      totalBonusEur: totals.totalBonusEur,
-      totalBonus: totals.totalBonusEur  // alias for Postman compatibility
+      socialTotal: totals.socialTotalEur,
+      ordersTotal: totals.ordersTotalEur,
+      totalBonus:  totals.totalBonusEur
     });
   } catch (err) {
     return next(err);
