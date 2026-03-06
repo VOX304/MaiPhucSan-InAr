@@ -10,9 +10,17 @@
 <mat-card style="margin-bottom: 16px">
   <h4>Selection</h4>
   <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center">
-    <mat-form-field appearance="fill">
-      <mat-label>EmployeeId</mat-label>
-      <input matInput [(ngModel)]="employeeId" />
+
+    <mat-form-field appearance="fill" style="min-width: 240px">
+      <mat-label>Salesman</mat-label>
+      <mat-select
+        [value]="employeeId"
+        (selectionChange)="onSelectionChange($event.value)"
+        [disabled]="isLoadingSalesmen">
+        <mat-option *ngFor="let s of salesmen" [value]="s.employeeId">
+          {{ s.employeeId }} — {{ s.name }}
+        </mat-option>
+      </mat-select>
     </mat-form-field>
 
     <mat-form-field appearance="fill" style="width: 140px">
@@ -20,13 +28,13 @@
       <input matInput type="number" [(ngModel)]="year" />
     </mat-form-field>
 
-    <button mat-raised-button color="primary" (click)="computeBonus()" [disabled]="isComputing">
+    <button mat-raised-button color="primary" (click)="computeBonus()" [disabled]="isComputing || !employeeId">
       {{ isComputing ? 'Computing…' : 'Compute Bonus' }}
     </button>
-    <button mat-stroked-button (click)="loadBonus()" [disabled]="isLoading">
+    <button mat-stroked-button (click)="loadBonus()" [disabled]="isLoading || !employeeId">
       {{ isLoading ? 'Loading…' : 'Load Bonus' }}
     </button>
-    <button mat-stroked-button color="primary" (click)="approveCeo()" [disabled]="isApproving">
+    <button mat-stroked-button color="primary" (click)="approveCeo()" [disabled]="isApproving || !employeeId">
       {{ isApproving ? 'Approving…' : 'Approve (CEO)' }}
     </button>
   </div>
@@ -40,7 +48,9 @@
       <strong>Total:</strong> {{ bonus.totalBonusEur | number:'1.2-2' }} EUR
       (social: {{ bonus.socialTotalEur | number:'1.2-2' }}, orders: {{ bonus.ordersTotalEur | number:'1.2-2' }})
     </p>
-    <p *ngIf="bonus.computedBy"><em>Computed by {{ bonus.computedBy }} on {{ bonus.computedAt | date:'short' }}</em></p>
+    <p *ngIf="bonus.computedBy">
+      <em>Computed by {{ bonus.computedBy }} on {{ bonus.computedAt | date:'short' }}</em>
+    </p>
 
     <h5>Remarks</h5>
     <ul *ngIf="bonus.remarks?.length; else noRemarks">
@@ -50,7 +60,7 @@
     </ul>
     <ng-template #noRemarks><p style="color: #666">No remarks yet.</p></ng-template>
   </div>
-  <ng-template #noBonus><p>No bonus loaded. Click "Compute Bonus" or "Load Bonus".</p></ng-template>
+  <ng-template #noBonus><p>No bonus loaded. Select a salesman then click "Compute Bonus" or "Load Bonus".</p></ng-template>
 </mat-card>
 
 <mat-card style="margin-bottom: 16px">
@@ -60,7 +70,9 @@
       <mat-label>Remark</mat-label>
       <input matInput formControlName="text" />
     </mat-form-field>
-    <button mat-raised-button color="primary" type="submit" [disabled]="remarkForm.invalid">Add remark</button>
+    <button mat-raised-button color="primary" type="submit" [disabled]="remarkForm.invalid || !employeeId">
+      Add remark
+    </button>
   </form>
 </mat-card>
 
@@ -85,7 +97,9 @@
       </mat-select>
     </mat-form-field>
 
-    <button mat-raised-button color="primary" type="submit" [disabled]="qualificationForm.invalid">Create</button>
+    <button mat-raised-button color="primary" type="submit" [disabled]="qualificationForm.invalid || !employeeId">
+      Create
+    </button>
   </form>
 </mat-card>
 
@@ -94,7 +108,7 @@
   <p>Starts the <code>bonusApproval</code> BPMN process in Camunda.</p>
 
   <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center">
-    <button mat-stroked-button color="primary" (click)="startWorkflow()" [disabled]="isWorkflowStarting">
+    <button mat-stroked-button color="primary" (click)="startWorkflow()" [disabled]="isWorkflowStarting || !employeeId">
       {{ isWorkflowStarting ? 'Starting…' : 'Start process' }}
     </button>
     <button mat-stroked-button (click)="loadWorkflowTasks()" [disabled]="!workflow?.processInstanceId">

@@ -26,6 +26,8 @@ export class HrEmployeesComponent implements OnInit, OnDestroy {
   selectedEmployeeId = 'E1001';
   year = new Date().getFullYear();
 
+  error: string | null = null;
+
   isLoadingSalesmen = false;
   isLoadingSocial   = false;
   isLoadingOrders   = false;

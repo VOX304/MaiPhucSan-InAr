@@ -1,6 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FormBuilder, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { CommonModule, DecimalPipe } from '@angular/common';
+import { Subscription } from 'rxjs';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -9,7 +10,7 @@ import { MatSelectModule } from '@angular/material/select';
 
 import { ApiService, WorkflowStartResponse } from '../../services/api.service';
 import { NotificationService } from '../../services/notification.service';
-import { BonusComputation } from '../../models/api-models';
+import { BonusComputation, Salesman } from '../../models/api-models';
 
 @Component({
   selector: 'app-ceo-bonus',
@@ -19,15 +20,16 @@ import { BonusComputation } from '../../models/api-models';
     MatCardModule, MatFormFieldModule, MatInputModule, MatButtonModule, MatSelectModule
   ]
 })
-export class CeoBonusComponent {
-  employeeId = 'E1001';
+export class CeoBonusComponent implements OnInit, OnDestroy {
+  salesmen: Salesman[] = [];
+  employeeId = '';
   year = new Date().getFullYear();
 
   bonus: BonusComputation | null = null;
-  // workflow now typed against actual backend shape
   workflow: WorkflowStartResponse | null = null;
   workflowTasks: any[] = [];
 
+  isLoadingSalesmen  = false;
   isLoading          = false;
   isComputing        = false;
   isApproving        = false;
@@ -43,15 +45,45 @@ export class CeoBonusComponent {
     storeInOrangeHrm: [false]
   });
 
+  private subs: Subscription[] = [];
+
   constructor(private api: ApiService, private fb: FormBuilder, private notifications: NotificationService) {}
+
+  ngOnInit(): void {
+    this.loadSalesmen();
+  }
+
+  ngOnDestroy(): void {
+    this.subs.forEach((s) => s.unsubscribe());
+  }
+
+  loadSalesmen(): void {
+    this.isLoadingSalesmen = true;
+    const sub = this.api.listSalesmen().subscribe({
+      next: (salesmen) => {
+        this.salesmen = salesmen;
+        this.isLoadingSalesmen = false;
+        // auto-select first salesman so fields are never empty
+        if (salesmen.length && !this.employeeId) {
+          this.employeeId = salesmen[0].employeeId;
+        }
+      },
+      error: () => { this.isLoadingSalesmen = false; }
+    });
+    this.subs.push(sub);
+  }
+
+  onSelectionChange(employeeId: string): void {
+    this.employeeId = employeeId;
+    this.bonus = null;
+    this.workflow = null;
+    this.workflowTasks = [];
+  }
 
   loadBonus(): void {
     this.isLoading = true;
     this.api.getBonus(this.employeeId, this.year).subscribe({
-      next: (bonus) => {
-        this.bonus = bonus;
-        this.isLoading = false;
-      },
+      next: (bonus) => { this.bonus = bonus; this.isLoading = false; },
       error: () => { this.isLoading = false; }
     });
   }
@@ -87,7 +119,7 @@ export class CeoBonusComponent {
       next: () => {
         this.remarkForm.reset();
         this.notifications.success('Remark added');
-        this.loadBonus();   // refresh to get updated remarks list
+        this.loadBonus();
       },
       error: () => {}
     });
@@ -96,25 +128,21 @@ export class CeoBonusComponent {
   createQualification(): void {
     if (this.qualificationForm.invalid) return;
     const v = this.qualificationForm.value as any;
-    this.api
-      .createQualification(this.employeeId, {
-        year:             this.year,
-        title:            v.title,
-        description:      v.description || '',
-        storeInOrangeHrm: !!v.storeInOrangeHrm
-      })
-      .subscribe({
-        next: () => this.notifications.success('Qualification created'),
-        error: () => {}
-      });
+    this.api.createQualification(this.employeeId, {
+      year:             this.year,
+      title:            v.title,
+      description:      v.description || '',
+      storeInOrangeHrm: !!v.storeInOrangeHrm
+    }).subscribe({
+      next: () => this.notifications.success('Qualification created'),
+      error: () => {}
+    });
   }
 
-  // ── Workflow ───────────────────────────────────────────────────────────────
   startWorkflow(): void {
     this.isWorkflowStarting = true;
     this.api.startWorkflow(this.employeeId, this.year).subscribe({
       next: (res) => {
-        // Backend returns { processInstanceId, taskId?, stub? } — store directly
         this.workflow = res;
         this.workflowTasks = [];
         this.isWorkflowStarting = false;
@@ -127,7 +155,6 @@ export class CeoBonusComponent {
   loadWorkflowTasks(): void {
     if (!this.workflow?.processInstanceId) return;
     this.api.listWorkflowTasks(this.workflow.processInstanceId).subscribe({
-      // Backend returns flat array (not wrapped)
       next: (tasks) => (this.workflowTasks = tasks),
       error: () => {}
     });

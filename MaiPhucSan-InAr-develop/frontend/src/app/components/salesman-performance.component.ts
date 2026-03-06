@@ -34,7 +34,6 @@ export class SalesmanPerformanceComponent implements OnInit {
   isLoadingSocial  = false;
   isLoadingOrders  = false;
   isLoadingBonus   = false;
-  error: string | null = null;
 
   constructor(
     private api: ApiService,

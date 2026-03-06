@@ -114,10 +114,28 @@ export class ApiService {
         { params }
       )
       .pipe(
-        map((records) => ({
-          records,
-          socialTotalEur: records.reduce((sum, r) => sum + (r.computedBonusEur ?? 0), 0)
-        }))
+        map((raw: any[]) => {
+          const records: SocialPerformanceRecord[] = raw.map((r) => ({
+            _id:                r._id,
+            salesmanEmployeeId: r.salesmanEmployeeId ?? '',
+            year:               r.year ?? 0,
+            // backend formatRecord() returns 'criterion' not 'criterionName'
+            criterionKey:       r.criterionKey  ?? r.criterion ?? '',
+            criterionName:      r.criterionName ?? r.criterion ?? '',
+            targetValue:        r.targetValue   ?? 0,
+            actualValue:        r.actualValue   ?? 0,
+            weight:             r.weight        ?? undefined,
+            supervisorRating:   r.supervisorRating ?? undefined,
+            peerRating:         r.peerRating       ?? undefined,
+            // backend formatRecord() returns 'bonus' not 'computedBonusEur'
+            computedBonusEur:   r.computedBonusEur ?? r.bonus ?? 0,
+            remark:             r.remark ?? ''
+          }));
+          return {
+            records,
+            socialTotalEur: records.reduce((sum, r) => sum + (r.computedBonusEur ?? 0), 0)
+          };
+        })
       );
   }
 
