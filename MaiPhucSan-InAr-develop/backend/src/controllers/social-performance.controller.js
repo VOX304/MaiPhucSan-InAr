@@ -31,12 +31,15 @@ const patchSchema = Joi.object({
 
 function formatRecord(r) {
   return {
-    _id:          r._id,
-    criterion:    r.criterionName || r.criterionKey,
-    targetValue:  r.targetValue,
-    actualValue:  r.actualValue,
-    bonus:        r.computedBonusEur,
-    remark:       r.remark || ''
+    _id:              r._id,
+    criterion:        r.criterionName || r.criterionKey,
+    targetValue:      r.targetValue,
+    actualValue:      r.actualValue,
+    weight:           r.weight,
+    supervisorRating: r.supervisorRating,
+    peerRating:       r.peerRating,
+    bonus:            r.computedBonusEur,
+    remark:           r.remark || ''
   };
 }
 
@@ -102,14 +105,8 @@ exports.create = async (req, res, next) => {
       }
 
       const totalBonus = created.reduce((sum, r) => sum + (r.computedBonusEur || 0), 0);
-
-      // If every criterion was a duplicate, surface a 409
-      if (created.length === 0) {
-        return res.status(409).json({ error: 'All records already exist for this salesman/year' });
-      }
-
       return res.status(201).json({
-        _id:        created[0]._id,
+        _id:        created[0]?._id ?? null,
         employeeId: salesmanEmployeeId,
         year,
         bonus:      totalBonus,
